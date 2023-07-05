@@ -18,8 +18,8 @@ Sampler：通过采样，将声学特征向量与目标文字向量变换成含�
 基于负样本采样的 MWER 训练准则。
 更详细的细节见：
 
-论文： Paraformer: Fast and Accurate Parallel Transformer for Non-autoregressive End-to-End Speech Recognition
-论文解读：Paraformer: 高识别率、高计算效率的单轮非自回归端到端语音识别模型
+论文： [Paraformer: Fast and Accurate Parallel Transformer for Non-autoregressive End-to-End Speech Recognition](https://arxiv.org/abs/2206.08317 "Paraformer: Fast and Accurate Parallel Transformer for Non-autoregressive End-to-End Speech Recognition")
+论文解读：[Paraformer: 高识别率、高计算效率的单轮非自回归端到端语音识别模型](https://mp.weixin.qq.com/s/xQ87isj5_wxWiQs4qUXtVw "Paraformer: 高识别率、高计算效率的单轮非自回归端到端语音识别模型")
 
 ##### ASR常用参数（参考：asr.yaml文件）：
 用于解码的asr.yaml配置参数，取自官方模型配置config.yaml原文件。便于跟进和升级。
