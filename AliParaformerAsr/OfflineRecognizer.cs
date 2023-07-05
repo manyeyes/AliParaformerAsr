@@ -176,10 +176,12 @@ namespace AliParaformerAsr
         }
 
         /// <summary>
-        /// 验证字符串是否是中文。
+        /// Verify if the string is in Chinese.
         /// </summary>
-        /// <param name="checkedStr">需验证的字符串。</param>
-        /// <param name="allMatch">是否完全匹配。当值为true时，全部是中文；当值为false时，仅含有中文。</param>
+        /// <param name="checkedStr">The string to be verified.</param>
+        /// <param name="allMatch">Is it an exact match. When the value is true,all are in Chinese; 
+        /// When the value is false, only Chinese is included.
+        /// </param>
         /// <returns></returns>
         private bool IsChinese(string checkedStr, bool allMatch)
         {
@@ -225,7 +227,6 @@ namespace AliParaformerAsr
                 }
 
             }
-            //Array.Copy(xxx, 0, speech, 0, speech.Length);
             int s = 0;
             for (int i = 0; i < xxx.GetLength(0); i++)
             {
