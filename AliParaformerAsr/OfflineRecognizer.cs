@@ -198,7 +198,7 @@ namespace AliParaformerAsr
 
         private float[] PadSequence(List<OfflineInputEntity> modelInputs)
         {
-            int max_speech_length = modelInputs.Max(x => x.SpeechLength)+560*19;//560*30
+            int max_speech_length = modelInputs.Max(x => x.SpeechLength);
             int speech_length = max_speech_length * modelInputs.Count;
             float[] speech = new float[speech_length];
             float[,] xxx = new float[modelInputs.Count, max_speech_length];
