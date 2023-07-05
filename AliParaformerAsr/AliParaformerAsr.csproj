@@ -23,6 +23,21 @@
     <None Update="speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch\config.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch\example\0.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch\example\1.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch\example\2.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch\example\3.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch\example\4.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch\model.onnx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
