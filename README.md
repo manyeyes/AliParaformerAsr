@@ -37,10 +37,11 @@ using AliParaformerAsr;
 ###### 2.模型初始化和配置
 ```csharp
 string applicationBase = AppDomain.CurrentDomain.BaseDirectory;
-string modelFilePath = applicationBase + "./speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch/model.onnx";
-string configFilePath = applicationBase + "./speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch/asr.yaml";
-string mvnFilePath = applicationBase + "./speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch/am.mvn";
-string tokensFilePath = applicationBase + "./speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch/tokens.txt";
+string modelName = "speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx";
+string modelFilePath = applicationBase + "./"+ modelName + "/model_quant.onnx";
+string configFilePath = applicationBase + "./" + modelName + "/asr.yaml";
+string mvnFilePath = applicationBase + "./" + modelName + "/am.mvn";
+string tokensFilePath = applicationBase + "./" + modelName + "/tokens.txt";
 AliParaformerAsr.OfflineRecognizer offlineRecognizer = new OfflineRecognizer(modelFilePath, configFilePath, mvnFilePath, tokensFilePath);
 ```
 ###### 3.调用
