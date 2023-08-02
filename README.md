@@ -26,7 +26,7 @@ Sampler：通过采样，将声学特征向量与目标文字向量变换成含�
 ##### ASR常用参数（参考：asr.yaml文件）：
 用于解码的asr.yaml配置参数，取自官方模型配置config.yaml原文件。便于跟进和升级。
 
-##### paraformer-large offline onnx模型下载
+## paraformer-large offline onnx模型下载
 https://huggingface.co/manyeyes/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx
 
 ## 离线（非流式）模型调用方法：
