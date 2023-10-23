@@ -15,15 +15,5 @@ namespace AliParaformerAsr.Model
         public long[]? Token_num { get => _token_num; set => _token_num = value; }
         public List<int[]>? Token_nums { get => _token_nums; set => _token_nums = value; }
         public int[] Token_nums_length { get => _token_nums_length; set => _token_nums_length = value; }
-
-
-        ////{[token_num, {Microsoft.ML.OnnxRuntime.NodeMetadata}]}
-        //[VectorType(1, 8404)]
-        //[ColumnName("token_num")]
-        //public long[]? token_num { get => _token_num; set => _token_num = value; }
-
-        //[ColumnName("token_numss")]
-        //public List<int[]>? token_nums { get => _token_nums; set => _token_nums = value; }
-        //public int token_nums_length { get => _token_nums_length; set => _token_nums_length = value; }
     }
 }

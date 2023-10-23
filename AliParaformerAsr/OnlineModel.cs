@@ -150,30 +150,40 @@ namespace AliParaformerAsr
             for (int i = 0; i < fsmnLayer; i++)
             {
                 float[] statesItemTemp = new float[statesList[0][i].Length * batchSize];
-                for (int b = 0; b < batchSize; b++)
+                int statesItemTemp_item_length = statesList[0][i].Length;
+                int statesItemTemp_item_axisnum = 512 * 10;
+                for (int x = 0; x < statesItemTemp_item_length / statesItemTemp_item_axisnum; x++)
                 {
-                    float[] statesItem = statesList[b][i];
-                    Array.Copy(statesItem, 0, statesItemTemp, b * statesItem.Length, statesItem.Length);
+                    for (int n = 0; n < batchSize; n++)
+                    {
+                        float[] statesItemTemp_item = statesList[n][0];
+                        Array.Copy(statesItemTemp_item, x * statesItemTemp_item_axisnum, statesItemTemp, (x * batchSize + n) * statesItemTemp_item_axisnum, statesItemTemp_item_axisnum);
+                    }
                 }
                 states.Add(statesItemTemp);
             }
             return states;
         }
-
         public List<List<float[]>> unstack_states(List<float[]> states)
         {
-            List<List<float[]>> statesList=new List<List<float[]>>();
+            List<List<float[]>> statesList = new List<List<float[]>>();
             Debug.Assert(states.Count % 16 == 0, "when stack_states, state_list[0] is 16x");
             int fsmnLayer = states.Count;
-            int batchSize = states[0].Length/512/10;
+            int batchSize = states[0].Length / 512 / 10;
             for (int b = 0; b < batchSize; b++)
             {
                 List<float[]> statesListItem = new List<float[]>();
                 for (int j = 0; j < fsmnLayer; j++)
                 {
-                    float[] state = new float[512 * 10];
-                    Array.Copy(states[j], b* state.Length, state, 0, state.Length);
-                    statesListItem.Add(state);
+                    float[] item = states[j];
+                    int statesItemTemp_axisnum = 512 * 10;
+                    int statesItemTemp_size = 1 * 512 * 10;
+                    float[] statesItemTemp_item = new float[statesItemTemp_size];
+                    for (int k = 0; k < statesItemTemp_size / statesItemTemp_axisnum; k++)
+                    {
+                        Array.Copy(item, (item.Length / statesItemTemp_size * k + b) * statesItemTemp_axisnum, statesItemTemp_item, k * statesItemTemp_axisnum, statesItemTemp_axisnum);
+                    }
+                    statesListItem.Add(statesItemTemp_item);
                 }
                 statesList.Add(statesListItem);
             }
