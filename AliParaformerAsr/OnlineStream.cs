@@ -169,7 +169,7 @@ namespace AliParaformerAsr
         // Note: chunk_length is in frames before subsampling
         public float[]? GetDecodeChunk(int chunkLength)
         {
-            chunkLength = chunkLength;
+            //chunkLength = _chunkLength;
             int featureDim = _frontendConfEntity.n_mels;
             lock (obj)
             {

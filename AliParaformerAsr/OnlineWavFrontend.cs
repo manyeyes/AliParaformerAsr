@@ -85,11 +85,11 @@ namespace AliParaformerAsr
         {
             int t = inputs.Length / 80;
             int t_lfr = 0;
-            if (t% lfr_n < lfr_m - lfr_n)
+            if (t % lfr_n < lfr_m - lfr_n)
             {
-                t_lfr= (int)Math.Floor((double)(t / lfr_n))-1;
+                t_lfr = (int)Math.Floor((double)(t / lfr_n)) - 1;
             }
-            if (t % lfr_n >= lfr_m- lfr_n)
+            if (t % lfr_n >= lfr_m - lfr_n)
             {
                 t_lfr = (int)Math.Floor((double)(t / lfr_n));
             }
@@ -101,7 +101,7 @@ namespace AliParaformerAsr
             return LFR_outputs;
         }
 
-            public float[] ApplyLfr2(float[] inputs, int lfr_m, int lfr_n)
+        public float[] ApplyLfr2(float[] inputs, int lfr_m, int lfr_n)
         {
             int t = inputs.Length / 80;
             int t_lfr = (int)Math.Floor((double)(t / lfr_n));
