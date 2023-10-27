@@ -10,7 +10,7 @@ namespace AliParaformerAsr
         private int _blank_id = 0;
         private int sos_eos_id = 1;
         private int _unk_id = 2;
-        private int _featureDim = 560;
+        private int _featureDim = 80;
 
         public OfflineModel(string modelFilePath, int threadsNum = 2)
         {
