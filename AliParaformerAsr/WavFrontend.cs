@@ -117,10 +117,7 @@ namespace AliParaformerAsr
         {
             List<float> means_list = new List<float>();
             List<float> vars_list = new List<float>();
-            FileStreamOptions options = new FileStreamOptions();
-            options.Access = FileAccess.Read;
-            options.Mode = FileMode.Open;
-            StreamReader srtReader = new StreamReader(mvnFilePath, options);
+            StreamReader srtReader = new StreamReader(mvnFilePath);
             int i = 0;
             while (!srtReader.EndOfStream)
             {
