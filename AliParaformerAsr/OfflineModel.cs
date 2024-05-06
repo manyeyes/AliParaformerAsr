@@ -1,5 +1,6 @@
 ﻿// See https://github.com/manyeyes for more information
 // Copyright (c)  2023 by manyeyes
+using AliParaformerAsr.Model;
 using Microsoft.ML.OnnxRuntime;
 
 namespace AliParaformerAsr
@@ -33,6 +34,21 @@ namespace AliParaformerAsr
             InferenceSession onnxSession = new InferenceSession(modelFilePath, options);
             return onnxSession;
         }
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (_modelSession != null)
+                {
+                    _modelSession.Dispose();
+                }
+            }
+        }
 
+        internal void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
     }
 }

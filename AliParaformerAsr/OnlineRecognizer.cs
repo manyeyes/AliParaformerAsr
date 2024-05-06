@@ -18,8 +18,10 @@ namespace AliParaformerAsr
     /// offline recognizer package
     /// Copyright (c)  2023 by manyeyes
     /// </summary>
-    public class OnlineRecognizer
+    public class OnlineRecognizer : IDisposable
     {
+        private bool _disposed;
+
         private OnlineModel _onlineModel;
         private readonly ILogger<OnlineRecognizer> _logger;
         private string _mvnFilePath;
@@ -525,6 +527,34 @@ namespace AliParaformerAsr
                 }
             }
             return speech;
+        }
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    if (_onlineModel != null)
+                    {
+                        _onlineModel.Dispose();
+                    }
+                    if (_tokens != null)
+                    {
+                        _tokens = null;
+                    }
+                }
+                _disposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+        ~OnlineRecognizer()
+        {
+            Dispose(_disposed);
         }
     }
 }

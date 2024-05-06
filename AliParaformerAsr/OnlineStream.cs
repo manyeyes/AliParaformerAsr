@@ -272,5 +272,80 @@ namespace AliParaformerAsr
             float[] cacheFeats = new float[batchSize * 10 * 560];
             return cacheFeats;
         }
+        /// <summary>
+        /// when is endpoint,determine whether it is completed
+        /// </summary>
+        /// <param name="isEndpoint"></param>
+        /// <returns></returns>
+        public bool IsFinished(bool isEndpoint = false)
+        {
+            int featureDim = _frontendConfEntity.n_mels;
+            if (isEndpoint)
+            {
+                int oLen = 0;
+                if (OnlineInputEntity.SpeechLength > 0)
+                {
+                    oLen = OnlineInputEntity.SpeechLength;
+                }
+                if (oLen > 0)
+                {
+                    var avg = OnlineInputEntity.Speech.Average();
+                    int num = OnlineInputEntity.Speech.Where(x => x != avg).ToArray().Length;
+                    if (num == 0)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        if (oLen <= _chunkLength * featureDim)
+                        {
+                            AddSamples(new float[400]);
+                        }
+                        return false;
+                    }
+
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (_wavFrontend != null)
+                {
+                    _wavFrontend.Dispose();
+                }
+                if (_onlineInputEntity != null)
+                {
+                    _onlineInputEntity = null;
+                }
+                if (_hyp != null)
+                {
+                    _hyp = null;
+                }
+                if (_tokens != null)
+                {
+                    _tokens = null;
+                }
+                if (_timestamps != null)
+                {
+                    _timestamps = null;
+                }
+            }
+        }
+
+        internal void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
     }
 }
