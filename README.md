@@ -49,7 +49,14 @@ AliParaformerAsr.OfflineRecognizer offlineRecognizer = new OfflineRecognizer(mod
 List<float[]> samples = new List<float[]>();
 //这里省略wav文件转samples...
 //具体参考示例（AliParaformerAsr.Examples）代码
-List<string> results_batch = offlineRecognizer.GetResults(samples);
+List<AliParaformerAsr.OfflineStream> streams = new List<AliParaformerAsr.OfflineStream>();
+foreach (var sample in samples)
+{
+    AliParaformerAsr.OfflineStream stream = offlineRecognizer.CreateOfflineStream();
+    stream.AddSamples(sample);
+    streams.Add(stream);
+}
+List<AliParaformerAsr.Model.OfflineRecognizerResultEntity> results = offlineRecognizer.GetResults(streams);
 ```
 ###### 4.输出结果：
 ```
@@ -68,8 +75,157 @@ total_duration:40525.6875
 rtf:0.037084696280599808
 end!
 ```
+
+###### 5.输出时间戳
+如需输出字级（中文）或单词级（英文）时间戳，使用带时间戳的onnx模型即可，其他调用方式与上述一致。
+时间戳单位：ms
+```
+he must be home now for the light is on他一定在家因为灯亮着就是有一种推理或者解释的那种感觉
+he:[49,229]
+must:[229,630]
+be:[630,989]
+home:[989,1350]
+now:[1350,1569]
+for:[1569,1829]
+the:[1829,1949]
+light:[1949,2270]
+is:[2270,2490]
+on:[2490,2790]
+他:[2790,2970]
+一:[2970,3129]
+定:[3129,3310]
+在:[3310,3490]
+家:[3490,3689]
+因:[3689,3790]
+为:[3790,3990]
+灯:[3990,4150]
+亮:[4150,4430]
+着:[4430,4830]
+就:[4830,4970]
+是:[4970,5089]
+有:[5089,5230]
+一:[5230,5350]
+种:[5970,6230]
+推:[6230,6430]
+理:[6430,6569]
+或:[6569,6770]
+者:[6770,6990]
+解:[6990,7170]
+释:[7170,7529]
+的:[7529,7710]
+那:[7710,7870]
+种:[7870,8010]
+感:[8010,10554]
+觉:[10554,13019]
+```
+
+## 实时（流式）模型调用方法：
+
+###### 1.添加项目引用
+using AliParaformerAsr;
+
+###### 2.模型初始化和配置
+```csharp
+string encoderFilePath = applicationBase + "./" + modelName + "/encoder.int8.onnx";
+string decoderFilePath = applicationBase + "./" + modelName + "/decoder.int8.onnx";
+string configFilePath = applicationBase + "./" + modelName + "/asr.yaml";
+string mvnFilePath = applicationBase + "./" + modelName + "/am.mvn";
+string tokensFilePath = applicationBase + "./" + modelName + "/tokens.txt";
+OnlineRecognizer onlineRecognizer = new OnlineRecognizer(encoderFilePath, decoderFilePath, configFilePath, mvnFilePath, tokensFilePath);
+```
+###### 3.调用
+```csharp
+List<float[]> samples = new List<float[]>();
+//这里省略wav文件转samples...
+//这里省略细节，以下是批处理示意代码：
+List<AliParaformerAsr.OnlineStream> streams = new List<AliParaformerAsr.OnlineStream>();
+AliParaformerAsr.OnlineStream stream = onlineRecognizer.CreateOnlineStream();
+foreach (var sample in samples)
+{
+    AliParaformerAsr.OnlineStream stream = onlineRecognizer.CreateOnlineStream();
+    stream.AddSamples(sample);
+    streams.Add(stream);
+}
+List<AliParaformerAsr.OnlineRecognizerResultEntity> results = onlineRecognizer.GetResults(streams);
+//单处理，只需构建一个stream:
+AliParaformerAsr.OnlineStream stream = onlineRecognizer.CreateOnlineStream();
+stream.AddSamples(sample);
+AliParaformerAsr.OnlineRecognizerResultEntity result = onlineRecognizer.GetResult(stream);
+//具体参考示例（AliParaformerAsr.Examples）代码
+```
+
+###### 4.输出结果
+```
+正是
+
+正是因为存
+
+正是因为存在绝对正
+
+正是因为存在绝对正义所以我
+
+正是因为存在绝对正义所以我我接
+
+正是因为存在绝对正义所以我我接受现实
+
+正是因为存在绝对正义所以我我接受现实式相对生
+
+正是因为存在绝对正义所以我我接受现实式相对生
+
+正是因为存在绝对正义所以我我接受现实式相对生但是
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这这个界界
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这这个界界
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这这个界界
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这这个界界
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这这个界界
+
+正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这这个界界
+
+elapsed_milliseconds:1389.3125
+total_duration:13052
+rtf:0.10644441464909593
+Hello, World!
+```
+
 *
-处理长音频，推荐结合AliFsmnVad一起使用：https://github.com/manyeyes/AliFsmnVad 
+处理长音频，推荐结合AliFsmnVad一起使用，项目地址：https://github.com/manyeyes/AliFsmnVad 
 *
 
 其他说明：
