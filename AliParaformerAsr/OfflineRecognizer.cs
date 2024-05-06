@@ -28,7 +28,7 @@ namespace AliParaformerAsr
             _offlineModel = new OfflineModel(modelFilePath, threadsNum);
             _tokens = File.ReadAllLines(tokensFilePath);
             _asrYamlEntity = YamlHelper.ReadYaml<AsrYamlEntity>(configFilePath);
-            _mvnFilePath= mvnFilePath;
+            _mvnFilePath = mvnFilePath;
             ILoggerFactory loggerFactory = new LoggerFactory();
             _logger = new Logger<OfflineRecognizer>(loggerFactory);
         }
@@ -43,7 +43,7 @@ namespace AliParaformerAsr
             List<OfflineStream> streams = new List<OfflineStream>();
             streams.Add(stream);
             OfflineRecognizerResultEntity text_result = GetResults(streams)[0];
-            
+
             return text_result;
         }
         public List<OfflineRecognizerResultEntity> GetResults(List<OfflineStream> streams)
@@ -153,7 +153,8 @@ namespace AliParaformerAsr
             List<float[]> timestamp_list = new List<float[]>();
             int START_END_THRESHOLD = 5;
             int MAX_TOKEN_DURATION = 30;
-            float TIME_RATE = 10.0F * 6 / 1000 / 3;
+            float TIME_RATE = 10.0F * 6 / 1000 / 3;//3 times upsampled
+
             int num_frames = us_cif_peak.Length;
             List<float> fire_place = new List<float>();
             for (int i = 0; i < us_cif_peak.Length; i++)
@@ -163,9 +164,10 @@ namespace AliParaformerAsr
                     fire_place.Add(i + total_offset);
                 }
             }
+            //begin silence
             if (fire_place[0] > START_END_THRESHOLD)
-            {
-                //
+            {                
+                timestamp_list.Add(new float[] { 0.0f, fire_place[0] * TIME_RATE });
             }
             List<int[]> timestamps = new List<int[]>();
             for (int i = 0; i < fire_place.Count - 1; i++)
@@ -276,7 +278,7 @@ namespace AliParaformerAsr
             }
 #pragma warning restore CS8602 // 解引用可能出现空引用。
             return offlineRecognizerResultEntities;
-        }        
+        }
 
         /// <summary>
         /// Verify if the string is in Chinese.

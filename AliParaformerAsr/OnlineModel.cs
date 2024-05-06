@@ -1,16 +1,7 @@
 ﻿// See https://github.com/manyeyes for more information
 // Copyright (c)  2023 by manyeyes
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using AliParaformerAsr.Model;
 using Microsoft.ML.OnnxRuntime;
-using Microsoft.ML.OnnxRuntime.Tensors;
+using System.Diagnostics;
 
 namespace AliParaformerAsr
 {
@@ -19,7 +10,7 @@ namespace AliParaformerAsr
         private InferenceSession _encoderSession;
         private InferenceSession _decoderSession;
 
-        private int _lfr = 5;
+        private int _lfr = 10;
         private int _chunkLength;
         private int _shiftLength;
         
