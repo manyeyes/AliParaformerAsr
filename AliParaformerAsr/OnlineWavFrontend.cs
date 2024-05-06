@@ -197,5 +197,29 @@ namespace AliParaformerAsr
             return inputs;
             //encode
         }
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (_onlineFbank != null)
+                {
+                    _onlineFbank.Dispose();
+                }
+                if (_cmvnEntity != null)
+                {
+                    _cmvnEntity = null;
+                }
+                if (_frontendConfEntity != null)
+                {
+                    _frontendConfEntity = null;
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
     }
 }

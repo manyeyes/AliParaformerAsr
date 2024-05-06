@@ -189,5 +189,25 @@ namespace AliParaformerAsr
             }
             return statesList;
         }
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (_encoderSession != null)
+                {
+                    _encoderSession.Dispose();
+                }
+                if (_decoderSession != null)
+                {
+                    _decoderSession.Dispose();
+                }
+            }
+        }
+
+        internal void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
     }
 }

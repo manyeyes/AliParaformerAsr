@@ -13,8 +13,10 @@ namespace AliParaformerAsr
     /// offline recognizer package
     /// Copyright (c)  2023 by manyeyes
     /// </summary>
-    public class OfflineRecognizer
+    public class OfflineRecognizer : IDisposable
     {
+        private bool _disposed;
+
         private OfflineModel _offlineModel;
         private readonly ILogger<OfflineRecognizer> _logger;
         private string[] _tokens;
@@ -337,6 +339,35 @@ namespace AliParaformerAsr
             }
             speech = speech.Select(x => x == 0 ? -23.025850929940457F : x).ToArray();
             return speech;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    if (_offlineModel != null)
+                    {
+                        _offlineModel.Dispose();
+                    }
+                    if (_tokens != null)
+                    {
+                        _tokens = null;
+                    }
+                }
+                _disposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+        ~OfflineRecognizer()
+        {
+            Dispose(_disposed);
         }
     }
 }

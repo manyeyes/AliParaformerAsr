@@ -63,5 +63,37 @@ namespace AliParaformerAsr
                 }
             }
         }
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (_wavFrontend != null)
+                {
+                    _wavFrontend.Dispose();
+                }
+                if (_offlineInputEntity != null)
+                {
+                    _offlineInputEntity = null;
+                }
+                if (_hyp != null)
+                {
+                    _hyp = null;
+                }
+                if (_tokens != null)
+                {
+                    _tokens = null;
+                }
+                if (_timestamps != null)
+                {
+                    _timestamps = null;
+                }
+            }
+        }
+
+        internal void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
     }
 }
