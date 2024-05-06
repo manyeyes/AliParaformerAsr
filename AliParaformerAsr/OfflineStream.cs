@@ -23,7 +23,7 @@ namespace AliParaformerAsr
             _frontendConfEntity = asrYamlEntity.frontend_conf;
             _hyp = new Int64[] { _blank_id, _blank_id };
             _tokens = new List<Int64> { _blank_id, _blank_id };
-            _timestamps= new List<int[]> { new int[] { 0,0}, new int[] { 0, 0 } };
+            _timestamps= new List<int[]> {  };
         }
 
         public OfflineInputEntity OfflineInputEntity { get => _offlineInputEntity; set => _offlineInputEntity = value; }

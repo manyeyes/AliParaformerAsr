@@ -1,16 +1,11 @@
 ﻿// See https://github.com/manyeyes for more information
 // Copyright (c)  2023 by manyeyes
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AliParaformerAsr.Model;
 using AliParaformerAsr.Utils;
-using Microsoft.ML;
+using Microsoft.Extensions.Logging;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
-using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
-using System.IO;
 
 namespace AliParaformerAsr
 {
@@ -47,6 +42,14 @@ namespace AliParaformerAsr
         {
             OnlineStream onlineStream = new OnlineStream(_mvnFilePath, _asrYamlEntity,_onlineModel.ChunkLength);
             return onlineStream;
+        }
+        public OnlineRecognizerResultEntity GetResult(OnlineStream stream)
+        {
+            List<OnlineStream> streams = new List<OnlineStream>();
+            streams.Add(stream);
+            OnlineRecognizerResultEntity onlineRecognizerResultEntity = GetResults(streams)[0];
+
+            return onlineRecognizerResultEntity;
         }
 
         public List<OnlineRecognizerResultEntity> GetResults(List<OnlineStream> streams)
@@ -348,17 +351,14 @@ namespace AliParaformerAsr
             }
             return decoderOutputEntity;
         }
-        int xxx = 0;
 
         private void Forward(List<OnlineStream> streams)
         {
-
             if (streams.Count == 0)
             {
                 return;
             }
             List<OnlineStream> streamsWorking = new List<OnlineStream>();
-            int contextSize = 2;
             List<OnlineInputEntity> modelInputs = new List<OnlineInputEntity>();
             List<List<float[]>> stateList = new List<List<float[]>>();
             List<Int64[]> hypList = new List<Int64[]>();
@@ -373,7 +373,6 @@ namespace AliParaformerAsr
                 {
                     continue;
                 }
-                //iMax++;
                 onlineInputEntity.SpeechLength = onlineInputEntity.Speech.Length;
                 modelInputs.Add(onlineInputEntity);
                 hypList.Add(stream.Hyp);
@@ -385,7 +384,6 @@ namespace AliParaformerAsr
             {
                 return;
             }
-            xxx++;
             try
             {
                 int batchSize = modelInputs.Count;
@@ -419,7 +417,6 @@ namespace AliParaformerAsr
         private List<OnlineRecognizerResultEntity> DecodeMulti(List<OnlineStream> streams)
         {
             List<OnlineRecognizerResultEntity> onlineRecognizerResultEntities = new List<OnlineRecognizerResultEntity>();
-            //List<string> text_results = new List<string>();
 #pragma warning disable CS8602 // 解引用可能出现空引用。
             foreach (OnlineStream stream in streams)
             {
