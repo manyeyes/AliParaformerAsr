@@ -339,7 +339,7 @@ namespace AliParaformerAsr
                     s++;
                 }
             }
-            speech = speech.Select(x => x == 0 ? -23.025850929940457F : x).ToArray();
+            speech = speech.Select(x => x == 0 ? -23.025850929940457F*32768 : x).ToArray();
             return speech;
         }
 
