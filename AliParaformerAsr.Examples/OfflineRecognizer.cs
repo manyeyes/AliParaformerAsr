@@ -11,12 +11,15 @@ namespace AliParaformerAsr.Examples
     {
         public static OfflineRecognizer initOfflineRecognizer(string modelName)
         {
-            
+            TimeSpan start_time = new TimeSpan(DateTime.Now.Ticks);
             string modelFilePath = applicationBase + "./" + modelName + "/model.ts.int8.onnx";
             string configFilePath = applicationBase + "./" + modelName + "/asr.yaml";
             string mvnFilePath = applicationBase + "./" + modelName + "/am.mvn";
             string tokensFilePath = applicationBase + "./" + modelName + "/tokens.txt";
             OfflineRecognizer offlineRecognizer = new OfflineRecognizer(modelFilePath, configFilePath, mvnFilePath, tokensFilePath);
+            TimeSpan end_time = new TimeSpan(DateTime.Now.Ticks);
+            double elapsed_milliseconds_init = end_time.TotalMilliseconds - start_time.TotalMilliseconds;
+            Console.WriteLine("loading_the_model_elapsed_milliseconds:{0}", elapsed_milliseconds_init.ToString());
             return offlineRecognizer;
         }
         public static void OfflineRecognizer(List<float[]>? samples = null)
