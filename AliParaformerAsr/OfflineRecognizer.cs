@@ -167,7 +167,6 @@ namespace AliParaformerAsr
             {
                 if (us_cif_peak[i] > 1.0F - 1e-4)
                 {
-                    //fire_place.Add((int)Math.Ceiling(i + total_offset));
                     fire_place.Add((int)(i + total_offset));
                 }
             }
@@ -223,10 +222,6 @@ namespace AliParaformerAsr
                 }
             }
             new_char_list.Add(true);
-            //foreach (float[] timestamp in timestamp_list)
-            //{
-            //    timestamps.Add(new int[] { (int)(timestamp[0] * 1000), (int)(timestamp[1] * 1000) });
-            //}
             foreach (var item in new_char_list.Zip<bool, float[]>(timestamp_list))
             {
                 bool charX = item.First;
