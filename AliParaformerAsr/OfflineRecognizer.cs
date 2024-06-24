@@ -167,7 +167,7 @@ namespace AliParaformerAsr
             {
                 if (us_cif_peak[i] > 1.0F - 1e-4)
                 {
-                    fire_place.Add((int)(i + total_offset));
+                    fire_place.Add(i + total_offset);
                 }
             }
             List<bool> new_char_list = new List<bool>();
