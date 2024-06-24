@@ -1,9 +1,4 @@
-﻿using NAudio.Wave;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using AliParaformerAsr.Examples.Utils;
 
 namespace AliParaformerAsr.Examples
 {
@@ -30,21 +25,23 @@ namespace AliParaformerAsr.Examples
             if (samples == null)
             {
                 samples = new List<float[]>();
-                for (int i = 1; i < 4; i++)
+                for (int i = 1; i < 2; i++)
                 {
-                    string wavFilePath = string.Format(applicationBase + "./" + modelName + "/example/{0}.wav", i.ToString());
+                    string wavFilePath = string.Format(applicationBase + "./" + modelName + "/example/issue_12.wav", i.ToString());
                     if (!File.Exists(wavFilePath))
                     {
                         break;
                     }
-                    AudioFileReader _audioFileReader = new AudioFileReader(wavFilePath);
-                    byte[] datas = new byte[_audioFileReader.Length];
-                    _audioFileReader.Read(datas, 0, datas.Length);
-                    TimeSpan duration = _audioFileReader.TotalTime;
-                    float[] sample = new float[datas.Length / sizeof(float)];
-                    Buffer.BlockCopy(datas, 0, sample, 0, datas.Length);
-                    samples.Add(sample);
-                    total_duration += duration;
+                    TimeSpan duration = TimeSpan.Zero;
+                    //supports Windows, Mac, and Linux
+                    //float[] sample = AudioHelper.GetFileSamples(wavFilePath: wavFilePath,ref duration);
+                    //supports Windows only
+                    float[]? sample = AudioHelper.GetMediaSample(mediaFilePath: wavFilePath, ref duration);
+                    if(sample != null)
+                    {
+                        samples.Add(sample);
+                        total_duration += duration;
+                    }
                 }
             }
             TimeSpan start_time = new TimeSpan(DateTime.Now.Ticks);
