@@ -225,7 +225,8 @@ Hello, World!
 ```
 
 *
-处理长音频，推荐结合AliFsmnVad一起使用，项目地址：https://github.com/manyeyes/AliFsmnVad 
+处理长音频，推荐结合AliFsmnVad一起使用：
+项目地址：https://github.com/manyeyes/AliFsmnVad 
 *
 
 其他说明：
@@ -233,5 +234,11 @@ Hello, World!
 测试环境：windows11。
 测试用例中samples的计算,使用的是NAudio库。
 
-通过以下链接了解更多：
+官方模型介绍：
 https://www.modelscope.cn/models/damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch/summary
+
+参考
+----------
+[1] https://github.com/alibaba-damo-academy/FunASR
+
+
