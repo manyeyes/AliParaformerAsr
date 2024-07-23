@@ -15,7 +15,7 @@ namespace AliParaformerAsr
         List<Int64> _tokens = new List<Int64>();
         List<int[]> _timestamps = new List<int[]>();
         private static object obj = new object();
-        public OfflineStream(string mvnFilePath, AsrYamlEntity asrYamlEntity)
+        public OfflineStream(string mvnFilePath, ConfEntity asrYamlEntity)
         {
             _offlineInputEntity = new OfflineInputEntity();
 

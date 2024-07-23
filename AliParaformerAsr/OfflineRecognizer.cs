@@ -3,7 +3,6 @@
 using AliParaformerAsr.Model;
 using AliParaformerAsr.Utils;
 using Microsoft.Extensions.Logging;
-using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using System.Text.RegularExpressions;
 
@@ -20,14 +19,29 @@ namespace AliParaformerAsr
         private OfflineModel _offlineModel;
         private readonly ILogger<OfflineRecognizer> _logger;
         private string[] _tokens;
-        private AsrYamlEntity _asrYamlEntity;
+        private ConfEntity _confEntity;
         private string _mvnFilePath;
+        private IOfflineProj _offlineProj;
 
         public OfflineRecognizer(string modelFilePath, string configFilePath, string mvnFilePath, string tokensFilePath, int batchSize = 1, int threadsNum = 1)
         {
             _offlineModel = new OfflineModel(modelFilePath, threadsNum);
+            _confEntity = YamlHelper.ReadYaml<ConfEntity>(configFilePath);
+            _offlineModel.Use_itn = _confEntity.use_itn;
+            switch (_confEntity.model.ToLower())
+            {
+                case "paraformer":
+                    _offlineProj = new OfflineProjOfParaformer(_offlineModel);
+                    break;
+                case "sensevoicesmall":
+                    _offlineProj = new OfflineProjOfSenseVoiceSmall(_offlineModel);
+                    break;
+                default:
+                    _offlineProj = new OfflineProjOfParaformer(_offlineModel);
+                    break;
+            }
             _tokens = File.ReadAllLines(tokensFilePath);
-            _asrYamlEntity = YamlHelper.ReadYaml<AsrYamlEntity>(configFilePath);
+            
             _mvnFilePath = mvnFilePath;
             ILoggerFactory loggerFactory = new LoggerFactory();
             _logger = new Logger<OfflineRecognizer>(loggerFactory);
@@ -35,7 +49,7 @@ namespace AliParaformerAsr
 
         public OfflineStream CreateOfflineStream()
         {
-            OfflineStream offlineStream = new OfflineStream(_mvnFilePath, _asrYamlEntity);
+            OfflineStream offlineStream = new OfflineStream(_mvnFilePath, _confEntity);
             return offlineStream;
         }
         public OfflineRecognizerResultEntity GetResult(OfflineStream stream)
@@ -53,7 +67,6 @@ namespace AliParaformerAsr
             List<OfflineRecognizerResultEntity> text_results = this.DecodeMulti(streams);
             return text_results;
         }
-
         private void Forward(List<OfflineStream> streams)
         {
             if (streams.Count == 0)
@@ -65,42 +78,13 @@ namespace AliParaformerAsr
             {
                 modelInputs.Add(stream.OfflineInputEntity);
             }
-            int batchSize = modelInputs.Count;
-            float[] padSequence = PadSequence(modelInputs);
-            var inputMeta = _offlineModel.ModelSession.InputMetadata;
-            var container = new List<NamedOnnxValue>();
-            foreach (var name in inputMeta.Keys)
-            {
-                if (name == "speech")
-                {
-                    int[] dim = new int[] { batchSize, padSequence.Length / 560 / batchSize, 560 };
-                    var tensor = new DenseTensor<float>(padSequence, dim, false);
-                    container.Add(NamedOnnxValue.CreateFromTensor<float>(name, tensor));
-                }
-                if (name == "speech_lengths")
-                {
-                    int[] dim = new int[] { batchSize };
-                    int[] speech_lengths = new int[batchSize];
-                    for (int i = 0; i < batchSize; i++)
-                    {
-                        speech_lengths[i] = padSequence.Length / 560 / batchSize;
-                    }
-                    var tensor = new DenseTensor<int>(speech_lengths, dim, false);
-                    container.Add(NamedOnnxValue.CreateFromTensor<int>(name, tensor));
-                }
-            }
-            IReadOnlyCollection<string> outputNames = new List<string>();
-            outputNames.Append("logits");
-            outputNames.Append("token_num");
-            IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results = null;
             try
             {
-                results = _offlineModel.ModelSession.Run(container);
-                if (results != null)
+                ModelOutputEntity modelOutputEntity = _offlineProj.ModelProj(modelInputs);
+                if (modelOutputEntity != null)
                 {
-                    var resultsArray = results.ToArray();
-                    Tensor<float> logits_tensor = resultsArray[0].AsTensor<float>();
-                    Tensor<Int64> token_nums_tensor = resultsArray[1].AsTensor<Int64>();
+                    Tensor<float>? logits_tensor = modelOutputEntity.model_out;
+                    int[] token_nums_tensor = modelOutputEntity.model_out_lens;
                     List<Int64[]> token_nums = new List<Int64[]> { };
                     List<List<int[]>> timestamps_list = new List<List<int[]>>();
                     for (int i = 0; i < logits_tensor.Dimensions[0]; i++)
@@ -120,10 +104,10 @@ namespace AliParaformerAsr
                         token_nums.Add(item);
                         timestamps_list.Add(timestamps);
                     }
-                    if (resultsArray.Length >= 4)
+                    if (modelOutputEntity.cif_peak_tensor!=null)
                     {
                         timestamps_list = new List<List<int[]>>();
-                        Tensor<float> cif_peak_tensor = resultsArray[3].AsTensor<float>();
+                        Tensor<float> cif_peak_tensor = modelOutputEntity.cif_peak_tensor;
                         for (int i = 0; i < cif_peak_tensor.Dimensions[0]; i++)
                         {
                             float[] us_cif_peak = new float[cif_peak_tensor.Dimensions[1]];
@@ -158,10 +142,10 @@ namespace AliParaformerAsr
             int num_frames = us_cif_peak.Length;
             if (tokens.Last() == 2)
             {
-                long[] newTokens= new long[tokens.Length-1];
+                long[] newTokens = new long[tokens.Length - 1];
                 Array.Copy(tokens, 0, newTokens, 0, newTokens.Length);
                 tokens = newTokens;
-            }            
+            }
             List<float> fire_place = new List<float>();
             for (int i = 0; i < us_cif_peak.Length; i++)
             {
@@ -191,7 +175,7 @@ namespace AliParaformerAsr
                 }
                 if (i == fire_place.Count - 2 || MAX_TOKEN_DURATION < 0 || fire_place[i + 1] - fire_place[i] < MAX_TOKEN_DURATION)
                 {
-                    timestamp_list.Add(new float[] { fire_place[i] * TIME_RATE, fire_place[i + 1] * TIME_RATE });                    
+                    timestamp_list.Add(new float[] { fire_place[i] * TIME_RATE, fire_place[i + 1] * TIME_RATE });
                 }
                 else
                 {
@@ -253,20 +237,21 @@ namespace AliParaformerAsr
                     {
                         break;
                     }
-                    if (_tokens[token] != "</s>" && _tokens[token] != "<s>" && _tokens[token] != "<blank>")
+                    string currText = _tokens[token].Split("\t")[0];
+                    if (currText != "</s>" && currText != "<s>" && currText != "<blank>" && currText != "<unk>")
                     {
-                        if (IsChinese(_tokens[token], true))
+                        if (IsChinese(currText, true))
                         {
-                            text_result += _tokens[token];
-                            offlineRecognizerResultEntity.Tokens.Add(_tokens[token]);
+                            text_result += currText;
+                            offlineRecognizerResultEntity.Tokens.Add(currText);
                             offlineRecognizerResultEntity.Timestamps.Add(result.Second);
                         }
                         else
                         {
-                            text_result += "▁" + _tokens[token] + "▁";
-                            if ((lastToken + "▁" + _tokens[token] + "▁").IndexOf("@@▁▁") > 0)
+                            text_result += "▁" + currText + "▁";
+                            if ((lastToken + "▁" + currText + "▁").IndexOf("@@▁▁") > 0)
                             {
-                                string currToken = (lastToken + "▁" + _tokens[token] + "▁").Replace("@@▁▁", "");
+                                string currToken = (lastToken + "▁" + currText + "▁").Replace("@@▁▁", "");
                                 int[] currTimestamp = null;
                                 if (lastTimestamp == null)
                                 {
@@ -287,9 +272,9 @@ namespace AliParaformerAsr
                             }
                             else
                             {
-                                offlineRecognizerResultEntity.Tokens.Add(_tokens[token]);
+                                offlineRecognizerResultEntity.Tokens.Add(currText);
                                 offlineRecognizerResultEntity.Timestamps.Add(result.Second);
-                                lastToken = "▁" + _tokens[token] + "▁";
+                                lastToken = "▁" + currText + "▁";
                                 lastTimestamp = result.Second;
                             }
 
@@ -326,48 +311,6 @@ namespace AliParaformerAsr
                 return true;
             else
                 return false;
-        }
-
-        private float[] PadSequence(List<OfflineInputEntity> modelInputs)
-        {
-            int max_speech_length = modelInputs.Max(x => x.SpeechLength) + 560 * 19;
-            int speech_length = max_speech_length * modelInputs.Count;
-            float[] speech = new float[speech_length];
-            float[,] xxx = new float[modelInputs.Count, max_speech_length];
-            for (int i = 0; i < modelInputs.Count; i++)
-            {
-                if (max_speech_length == modelInputs[i].SpeechLength)
-                {
-                    for (int j = 0; j < xxx.GetLength(1); j++)
-                    {
-#pragma warning disable CS8602 // 解引用可能出现空引用。
-                        xxx[i, j] = modelInputs[i].Speech[j];
-#pragma warning restore CS8602 // 解引用可能出现空引用。
-                    }
-                    continue;
-                }
-                float[] nullspeech = new float[max_speech_length - modelInputs[i].SpeechLength];
-                float[]? curr_speech = modelInputs[i].Speech;
-                float[] padspeech = new float[max_speech_length];
-                Array.Copy(curr_speech, 0, padspeech, 0, curr_speech.Length);
-                for (int j = 0; j < padspeech.Length; j++)
-                {
-#pragma warning disable CS8602 // 解引用可能出现空引用。
-                    xxx[i, j] = padspeech[j];
-#pragma warning restore CS8602 // 解引用可能出现空引用。 
-                }
-            }
-            int s = 0;
-            for (int i = 0; i < xxx.GetLength(0); i++)
-            {
-                for (int j = 0; j < xxx.GetLength(1); j++)
-                {
-                    speech[s] = xxx[i, j];
-                    s++;
-                }
-            }
-            speech = speech.Select(x => x == 0 ? -23.025850929940457F * 32768 : x).ToArray();
-            return speech;
         }
 
         protected virtual void Dispose(bool disposing)

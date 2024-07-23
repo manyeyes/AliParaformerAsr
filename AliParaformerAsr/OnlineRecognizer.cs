@@ -23,7 +23,7 @@ namespace AliParaformerAsr
         private string _frontend;
         private FrontendConfEntity _frontendConfEntity;
         private string[] _tokens;
-        private AsrYamlEntity _asrYamlEntity;
+        private ConfEntity _asrYamlEntity;
         //private int _batchSize = 1;
         private List<float[]> _next_statesList=new List<float[]>();
 
@@ -33,7 +33,7 @@ namespace AliParaformerAsr
             _mvnFilePath = mvnFilePath;
             _tokens = File.ReadAllLines(tokensFilePath);
 
-            _asrYamlEntity = YamlHelper.ReadYaml<AsrYamlEntity>(configFilePath);
+            _asrYamlEntity = YamlHelper.ReadYaml<ConfEntity>(configFilePath);
             ILoggerFactory loggerFactory = new LoggerFactory();
             _logger = new Logger<OnlineRecognizer>(loggerFactory);
         }

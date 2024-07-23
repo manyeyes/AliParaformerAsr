@@ -18,7 +18,7 @@ namespace AliParaformerAsr.Model
         private float _dither = 1.0F;
         private int _lfr_m = 7;
         private int _lfr_n = 6;
-        private bool _snip_edges = true;
+        private bool _snip_edges = false;
 
         public int fs { get => _fs; set => _fs = value; }
         public string window { get => _window; set => _window = value; }
