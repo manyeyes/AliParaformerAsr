@@ -2,7 +2,7 @@
 // Copyright (c)  2023 by manyeyes
 namespace AliParaformerAsr.Model
 {
-    public class AsrYamlEntity
+    public class ConfEntity
     {
         private int _input_size;
         private string _frontend = "wav_frontend";

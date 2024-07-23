@@ -1,6 +1,5 @@
 ﻿// See https://github.com/manyeyes for more information
 // Copyright (c)  2023 by manyeyes
-using AliParaformerAsr.Model;
 using Microsoft.ML.OnnxRuntime;
 
 namespace AliParaformerAsr
@@ -12,6 +11,7 @@ namespace AliParaformerAsr
         private int sos_eos_id = 1;
         private int _unk_id = 2;
         private int _featureDim = 80;
+        private int _sampleRate = 16000;
 
         public OfflineModel(string modelFilePath, int threadsNum = 2)
         {
@@ -22,6 +22,7 @@ namespace AliParaformerAsr
         public int Unk_id { get => _unk_id; set => _unk_id = value; }
         public int FeatureDim { get => _featureDim; set => _featureDim = value; }
         public InferenceSession ModelSession { get => _modelSession; set => _modelSession = value; }
+        public int SampleRate { get => _sampleRate; set => _sampleRate = value; }
 
         public InferenceSession initModel(string modelFilePath, int threadsNum = 2)
         {

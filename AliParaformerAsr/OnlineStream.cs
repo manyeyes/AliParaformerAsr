@@ -31,7 +31,7 @@ namespace AliParaformerAsr
         private int _frame_shift_sample_length;
         private int _lfr_m = 7;
         private float[] _cacheSamples = null;
-        public OnlineStream(string mvnFilePath, AsrYamlEntity asrYamlEntity, int chunkLength)
+        public OnlineStream(string mvnFilePath, ConfEntity asrYamlEntity, int chunkLength)
         {
             _onlineInputEntity = new OnlineInputEntity();
             _frontendConfEntity = asrYamlEntity.frontend_conf;
