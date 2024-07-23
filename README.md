@@ -3,25 +3,16 @@
 ##### 简介：
 
 **项目功能：语音识别。**
+
 **项目基于Net 6.0，使用C#编写，调用Microsoft.ML.OnnxRuntime对onnx模型进行解码，支持跨平台编译。项目以库的形式进行调用，部署非常方便。**
 
 ##### 支持的模型
 
-## paraformer-large offline onnx模型（支持语言：中文、英文；）
-https://huggingface.co/manyeyes/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx
-https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-offline
-*在普通cpu上运行，ASR整体流程的rtf在0.03左右）*
-
-## paraformer-large online onnx模型（支持语言：中文、英文；）
-https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-online
-*在普通cpu上运行，ASR整体流程的rtf在0.12左右）*
-
-## SenseVoiceSmall offline onnx模型（支持语言：中文、粤语、英文、日语、韩语；支持标点符号：是）
-https://www.modelscope.cn/models/manyeyes/sensevoice-small-onnx 
-## SenseVoiceSmall offline onnx模型(拆分embed)
-https://www.modelscope.cn/models/manyeyes/sensevoice-small-split-embed-onnx 
-*在普通cpu上运行，ASR整体流程的rtf在0.17左右）*
-
+| 模型名称  |  类型 | 实时率RTF  | 支持语言  | 标点  |  时间戳 | 下载地址  |
+| ------------ | ------------ | ------------ | ------------ | ------------ | ------------ | ------------ |
+|  paraformer-large | 非流式  | cpu-rtf-0.03  | 中文、英文  |  否 | 否  | [huggingface](https://huggingface.co/manyeyes/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx "huggingface")  [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-offline "modelscope") |
+|  paraformer-large | 流式 | cpu-rtf-0.12  |  中文、英文 |  否  | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-online "modelscope")  |
+|  SenseVoiceSmall |  非流式 | cpu-rtf-0.17  |  中文、粤语、英文、日语、韩语 | 是  | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/sensevoice-small-onnx "modelscope") [modelscope-split-embed](https://www.modelscope.cn/models/manyeyes/sensevoice-small-split-embed-onnx "modelscope-split-embed") |
 
 ##### 用途：
 Paraformer是达摩院语音团队提出的一种高效的非自回归端到端语音识别框架。本项目为Paraformer中文通用语音识别模型，采用工业级数万小时的标注音频进行模型训练，保证了模型的通用识别效果。模型可以被应用于语音输入法、语音导航、智能会议纪要等场景。准确率：高。
