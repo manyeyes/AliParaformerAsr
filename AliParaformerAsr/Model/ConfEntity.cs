@@ -8,6 +8,7 @@ namespace AliParaformerAsr.Model
         private string _frontend = "wav_frontend";
         private FrontendConfEntity _frontend_conf = new FrontendConfEntity();
         private string _model = "paraformer";
+        private bool _use_itn = false;
         private ModelConfEntity _model_conf = new ModelConfEntity();
         private string _preencoder = string.Empty;
         private PostEncoderConfEntity _preencoder_conf = new PostEncoderConfEntity();
@@ -38,5 +39,6 @@ namespace AliParaformerAsr.Model
         public string predictor { get => _predictor; set => _predictor = value; }
         public string version { get => _version; set => _version = value; }
         public PredictorConfEntity predictor_conf { get => _predictor_conf; set => _predictor_conf = value; }
+        public bool use_itn { get => _use_itn; set => _use_itn = value; }
     }
 }

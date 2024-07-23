@@ -27,6 +27,7 @@ namespace AliParaformerAsr
         {
             _offlineModel = new OfflineModel(modelFilePath, threadsNum);
             _confEntity = YamlHelper.ReadYaml<ConfEntity>(configFilePath);
+            _offlineModel.Use_itn = _confEntity.use_itn;
             switch (_confEntity.model.ToLower())
             {
                 case "paraformer":

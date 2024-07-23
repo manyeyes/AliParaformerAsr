@@ -41,6 +41,7 @@ namespace AliParaformerAsr
             _unk_id = offlineModel.Unk_id;
             _featureDim = offlineModel.FeatureDim;
             _sampleRate = offlineModel.SampleRate;
+            _use_itn = offlineModel.Use_itn;
         }
         public InferenceSession ModelSession { get => _modelSession; set => _modelSession = value; }
         public int Blank_id { get => _blank_id; set => _blank_id = value; }
@@ -60,6 +61,10 @@ namespace AliParaformerAsr
                 languageId = _lidDict.GetValueOrDefault(languageValue);
             }
             string textnormValue = "withitn";
+            if (!_use_itn)
+            {
+                textnormValue = "woitn";
+            }
             int textnormId = 15;
             if (_textnormDict.ContainsKey(textnormValue))
             {
@@ -96,7 +101,7 @@ namespace AliParaformerAsr
                     offlineInputEntity.SpeechLength = speech.Length;
                     offlineInputEntities.Add(offlineInputEntity);
                 }
-                modelInputs= offlineInputEntities;
+                modelInputs = offlineInputEntities;
             }
             float[] padSequence = PadHelper.PadSequence(modelInputs);
             var container = new List<NamedOnnxValue>();

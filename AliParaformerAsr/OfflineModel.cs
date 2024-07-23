@@ -12,6 +12,7 @@ namespace AliParaformerAsr
         private int _unk_id = 2;
         private int _featureDim = 80;
         private int _sampleRate = 16000;
+        private bool _use_itn = false;
 
         public OfflineModel(string modelFilePath, int threadsNum = 2)
         {
@@ -23,6 +24,7 @@ namespace AliParaformerAsr
         public int FeatureDim { get => _featureDim; set => _featureDim = value; }
         public InferenceSession ModelSession { get => _modelSession; set => _modelSession = value; }
         public int SampleRate { get => _sampleRate; set => _sampleRate = value; }
+        public bool Use_itn { get => _use_itn; set => _use_itn = value; }
 
         public InferenceSession initModel(string modelFilePath, int threadsNum = 2)
         {
