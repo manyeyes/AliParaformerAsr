@@ -17,7 +17,7 @@ namespace AliParaformerAsr
         private bool _disposed;
 
         private OfflineModel _offlineModel;
-        private readonly ILogger<OfflineRecognizer> _logger;
+        private readonly ILogger _logger;
         private string[] _tokens;
         private ConfEntity _confEntity;
         private string _mvnFilePath;

@@ -6,12 +6,13 @@
 
 **项目使用C#编写，调用Microsoft.ML.OnnxRuntime对onnx模型进行解码，支持框架.Net6.0+，支持跨平台编译，支持AOT编译。项目以库的形式进行调用，部署非常方便。**
 
-##### 支持的模型
+##### 支持的模型（ONNX）
 
 | 模型名称  |  类型 | 实时率RTF  | 支持语言  | 标点  |  时间戳 | 下载地址  |
 | ------------ | ------------ | ------------ | ------------ | ------------ | ------------ | ------------ |
-|  paraformer-large-offline | 非流式  | cpu-rtf-0.03  | 中文、英文  |  否 | 是  | [huggingface](https://huggingface.co/manyeyes/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx "huggingface"),  [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-offline "modelscope") |
-|  paraformer-large-online | 流式 | cpu-rtf-0.12  |  中文、英文 |  否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-online "modelscope")  |
+|  paraformer-large-zh-en-offline | 非流式  | cpu-rtf-0.03  | 中文、英文  |  否 | 是  | [huggingface](https://huggingface.co/manyeyes/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx "huggingface"),  [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-offline "modelscope") |
+|  paraformer-large-en-offline | 非流式 | cpu-rtf-0.05  |  英文 |  否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-en-offline "modelscope")  |
+|  paraformer-large-zh-en-online | 流式 | cpu-rtf-0.12  |  中文、英文 |  否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-online "modelscope")  |
 |  SenseVoiceSmall |  非流式 | cpu-rtf-0.15  |  中文、粤语、英文、日语、韩语 | 是  | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/sensevoice-small-onnx "modelscope"), [modelscope-split-embed](https://www.modelscope.cn/models/manyeyes/sensevoice-small-split-embed-onnx "modelscope-split-embed") |
 
 ##### 用途：
@@ -242,20 +243,17 @@ Hello, World!
 其他说明：
 
 测试用例：AliParaformerAsr.Examples。
-
 支持平台：
-
 Windows 7 SP1或更高版本,
 macOS 10.13 (High Sierra) 或更高版本,ios等，
 Linux 发行版（需要特定的依赖关系，详见.NET 6支持的Linux发行版列表），
 Android（Android 5.0 (API 21) 或更高版本）。
-
 示例中计算音频samples：NAudio库。
 
 官方介绍：
 
 * [paraformer-large-offline（非流式）](https://www.modelscope.cn/models/damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch "paraformer-large-offline（非流式）")
-[paraformer-large-online（流式）](https://www.modelscope.cn/models/iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online "paraformer-large-online（流式）")
+* [paraformer-large-online（流式）](https://www.modelscope.cn/models/iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online "paraformer-large-online（流式）")
 * [SenseVoiceSmall（非流式）](https://www.modelscope.cn/models/iic/SenseVoiceSmall "SenseVoiceSmall（非流式）")
 
 参考

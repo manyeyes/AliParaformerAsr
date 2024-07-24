@@ -11,7 +11,6 @@ namespace AliParaformerAsr
     /// </summary>
     internal class WavFrontend
     {
-        private string _mvnFilePath;
         private FrontendConfEntity _frontendConfEntity;
         OnlineFbank _onlineFbank;
         private CmvnEntity _cmvnEntity;
@@ -19,7 +18,6 @@ namespace AliParaformerAsr
 
         public WavFrontend(string mvnFilePath, FrontendConfEntity frontendConfEntity)
         {
-            _mvnFilePath = mvnFilePath;
             _frontendConfEntity = frontendConfEntity;
             _fbank_beg_idx = 0;
             _onlineFbank = new OnlineFbank(
