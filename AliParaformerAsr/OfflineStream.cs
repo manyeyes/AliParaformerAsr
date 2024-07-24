@@ -6,7 +6,6 @@ namespace AliParaformerAsr
 {
     public class OfflineStream
     {
-        private FrontendConfEntity _frontendConfEntity;
         private WavFrontend _wavFrontend;
         private OfflineInputEntity _offlineInputEntity;
         private int _blank_id = 0;
@@ -20,7 +19,6 @@ namespace AliParaformerAsr
             _offlineInputEntity = new OfflineInputEntity();
 
             _wavFrontend = new WavFrontend(mvnFilePath, asrYamlEntity.frontend_conf);
-            _frontendConfEntity = asrYamlEntity.frontend_conf;
             _hyp = new Int64[] { _blank_id, _blank_id };
             _tokens = new List<Int64> { _blank_id, _blank_id };
             _timestamps= new List<int[]> {  };
