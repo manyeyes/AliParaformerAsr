@@ -4,15 +4,15 @@
 
 **项目功能：语音识别。**
 
-**项目基于Net 6.0，使用C#编写，调用Microsoft.ML.OnnxRuntime对onnx模型进行解码，支持跨平台编译。项目以库的形式进行调用，部署非常方便。**
+**项目使用C#编写，调用Microsoft.ML.OnnxRuntime对onnx模型进行解码，支持框架.Net6.0+，支持跨平台编译，支持AOT编译。项目以库的形式进行调用，部署非常方便。**
 
 ##### 支持的模型
 
 | 模型名称  |  类型 | 实时率RTF  | 支持语言  | 标点  |  时间戳 | 下载地址  |
 | ------------ | ------------ | ------------ | ------------ | ------------ | ------------ | ------------ |
-|  paraformer-large | 非流式  | cpu-rtf-0.03  | 中文、英文  |  否 | 否  | [huggingface](https://huggingface.co/manyeyes/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx "huggingface")  [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-offline "modelscope") |
-|  paraformer-large | 流式 | cpu-rtf-0.12  |  中文、英文 |  否  | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-online "modelscope")  |
-|  SenseVoiceSmall |  非流式 | cpu-rtf-0.17  |  中文、粤语、英文、日语、韩语 | 是  | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/sensevoice-small-onnx "modelscope") [modelscope-split-embed](https://www.modelscope.cn/models/manyeyes/sensevoice-small-split-embed-onnx "modelscope-split-embed") |
+|  paraformer-large-offline | 非流式  | cpu-rtf-0.03  | 中文、英文  |  否 | 否  | [huggingface](https://huggingface.co/manyeyes/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx "huggingface"),  [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-offline "modelscope") |
+|  paraformer-large-online | 流式 | cpu-rtf-0.12  |  中文、英文 |  否  | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-online "modelscope")  |
+|  SenseVoiceSmall |  非流式 | cpu-rtf-0.15  |  中文、粤语、英文、日语、韩语 | 是  | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/sensevoice-small-onnx "modelscope"), [modelscope-split-embed](https://www.modelscope.cn/models/manyeyes/sensevoice-small-split-embed-onnx "modelscope-split-embed") |
 
 ##### 用途：
 Paraformer是达摩院语音团队提出的一种高效的非自回归端到端语音识别框架。本项目为Paraformer中文通用语音识别模型，采用工业级数万小时的标注音频进行模型训练，保证了模型的通用识别效果。模型可以被应用于语音输入法、语音导航、智能会议纪要等场景。准确率：高。
@@ -35,9 +35,6 @@ Sampler：通过采样，将声学特征向量与目标文字向量变换成含�
 
 ##### ASR常用参数（参考：asr.yaml文件）：
 用于解码的asr.yaml配置参数，取自官方模型配置config.yaml原文件。便于跟进和升级。
-
-## paraformer-large offline onnx模型下载
-https://huggingface.co/manyeyes/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx
 
 ## 离线（非流式）模型调用方法：
 
@@ -235,17 +232,25 @@ Hello, World!
 ```
 
 *
-处理长音频，推荐结合AliFsmnVad一起使用：
-项目地址：https://github.com/manyeyes/AliFsmnVad 
+相关工程：
+语音端点检测，解决长音频合理切分的问题，项目地址：[AliFsmnVad](https://github.com/manyeyes/AliFsmnVad "AliFsmnVad") 
+文本标点恢复，解决识别结果没有标点的问题，项目地址：[AliCTTransformerPunc](https://github.com/manyeyes/AliCTTransformerPunc "AliCTTransformerPunc")
 *
 
 其他说明：
 测试用例：AliParaformerAsr.Examples。
-测试环境：windows11。
-测试用例中samples的计算,使用的是NAudio库。
+支持平台：
+Windows 7 SP1或更高版本,
+macOS 10.13 (High Sierra) 或更高版本,ios等，
+Linux 发行版（需要特定的依赖关系，详见.NET 6支持的Linux发行版列表），
+Android（Android 5.0 (API 21) 或更高版本）。
+示例中计算音频samples：NAudio库。
 
-官方模型介绍：
-https://www.modelscope.cn/models/damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch/summary
+官方介绍：
+
+* [paraformer-large-offline（非流式）](https://www.modelscope.cn/models/damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch "paraformer-large-offline（非流式）")
+[paraformer-large-online（流式）](https://www.modelscope.cn/models/iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online "paraformer-large-online（流式）")
+* [SenseVoiceSmall（非流式）](https://www.modelscope.cn/models/iic/SenseVoiceSmall "SenseVoiceSmall（非流式）")
 
 参考
 ----------
