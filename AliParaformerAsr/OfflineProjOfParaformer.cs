@@ -1,9 +1,9 @@
 ﻿// See https://github.com/manyeyes for more information
 // Copyright (c)  2023 by manyeyes
 using AliParaformerAsr.Model;
+using AliParaformerAsr.Utils;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
-using AliParaformerAsr.Utils;
 
 namespace AliParaformerAsr
 {
