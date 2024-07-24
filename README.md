@@ -10,8 +10,8 @@
 
 | 模型名称  |  类型 | 实时率RTF  | 支持语言  | 标点  |  时间戳 | 下载地址  |
 | ------------ | ------------ | ------------ | ------------ | ------------ | ------------ | ------------ |
-|  paraformer-large-offline | 非流式  | cpu-rtf-0.03  | 中文、英文  |  否 | 否  | [huggingface](https://huggingface.co/manyeyes/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx "huggingface"),  [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-offline "modelscope") |
-|  paraformer-large-online | 流式 | cpu-rtf-0.12  |  中文、英文 |  否  | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-online "modelscope")  |
+|  paraformer-large-offline | 非流式  | cpu-rtf-0.03  | 中文、英文  |  否 | 是  | [huggingface](https://huggingface.co/manyeyes/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx "huggingface"),  [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-offline "modelscope") |
+|  paraformer-large-online | 流式 | cpu-rtf-0.12  |  中文、英文 |  否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-online "modelscope")  |
 |  SenseVoiceSmall |  非流式 | cpu-rtf-0.15  |  中文、粤语、英文、日语、韩语 | 是  | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/sensevoice-small-onnx "modelscope"), [modelscope-split-embed](https://www.modelscope.cn/models/manyeyes/sensevoice-small-split-embed-onnx "modelscope-split-embed") |
 
 ##### 用途：
@@ -233,17 +233,23 @@ Hello, World!
 
 *
 相关工程：
+
 语音端点检测，解决长音频合理切分的问题，项目地址：[AliFsmnVad](https://github.com/manyeyes/AliFsmnVad "AliFsmnVad") 
+
 文本标点恢复，解决识别结果没有标点的问题，项目地址：[AliCTTransformerPunc](https://github.com/manyeyes/AliCTTransformerPunc "AliCTTransformerPunc")
 *
 
 其他说明：
+
 测试用例：AliParaformerAsr.Examples。
+
 支持平台：
+
 Windows 7 SP1或更高版本,
 macOS 10.13 (High Sierra) 或更高版本,ios等，
 Linux 发行版（需要特定的依赖关系，详见.NET 6支持的Linux发行版列表），
 Android（Android 5.0 (API 21) 或更高版本）。
+
 示例中计算音频samples：NAudio库。
 
 官方介绍：
