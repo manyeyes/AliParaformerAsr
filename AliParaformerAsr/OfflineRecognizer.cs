@@ -41,7 +41,7 @@ namespace AliParaformerAsr
                     break;
             }
             _tokens = File.ReadAllLines(tokensFilePath);
-            
+
             _mvnFilePath = mvnFilePath;
             ILoggerFactory loggerFactory = new LoggerFactory();
             _logger = new Logger<OfflineRecognizer>(loggerFactory);
@@ -101,10 +101,26 @@ namespace AliParaformerAsr
                             item[j] = (int)token_num;
                             timestamps.Add(new int[] { 0, 0 });
                         }
+                        List<Int64> item1 = new List<Int64>(item);
+                        item1.Remove(item1.First());
+                        List<Int64> item2 = new List<Int64>(item);
+                        item2.RemoveAt(item2.Count - 1);
+                        List<Int64> newItem = new List<Int64>();
+                        int itemIndex = 0;
+                        foreach (var itemTemp in item1.Zip<Int64, Int64>(item2))
+                        {
+                            if (itemTemp.First != itemTemp.Second)
+                            {
+                                newItem.Add(item[itemIndex]);
+                            }
+                            itemIndex++;
+                        }
+                        newItem.Add(item.Last());
+                        item = newItem.ToArray();
                         token_nums.Add(item);
                         timestamps_list.Add(timestamps);
                     }
-                    if (modelOutputEntity.cif_peak_tensor!=null)
+                    if (modelOutputEntity.cif_peak_tensor != null)
                     {
                         timestamps_list = new List<List<int[]>>();
                         Tensor<float> cif_peak_tensor = modelOutputEntity.cif_peak_tensor;
@@ -270,9 +286,30 @@ namespace AliParaformerAsr
                                 lastToken = currToken;
                                 lastTimestamp = currTimestamp;
                             }
+                            else if (((lastToken + "▁" + currText + "▁").Count(x => x == '▁') == 3 || (lastToken + "▁" + currText + "▁").Count(x => x == '▁') == 5) && (lastToken + "▁" + currText + "▁").IndexOf("▁▁▁") < 0)
+                            {
+                                string currToken = (lastToken + "▁" + currText + "▁").Replace("▁▁", "");
+                                int[] currTimestamp = null;
+                                if (lastTimestamp == null)
+                                {
+                                    currTimestamp = result.Second;
+                                }
+                                else
+                                {
+                                    List<int> temp = lastTimestamp.ToList();
+                                    temp.AddRange(result.Second.ToList());
+                                    currTimestamp = temp.ToArray();
+                                }
+                                offlineRecognizerResultEntity.Tokens.Remove(offlineRecognizerResultEntity.Tokens.Last());
+                                offlineRecognizerResultEntity.Tokens.Add(currToken.Replace("▁", ""));
+                                offlineRecognizerResultEntity.Timestamps.Remove(offlineRecognizerResultEntity.Timestamps.Last());
+                                offlineRecognizerResultEntity.Timestamps.Add(currTimestamp);
+                                lastToken = currToken;
+                                lastTimestamp = currTimestamp;
+                            }
                             else
                             {
-                                offlineRecognizerResultEntity.Tokens.Add(currText);
+                                offlineRecognizerResultEntity.Tokens.Add(currText.Replace("▁", ""));
                                 offlineRecognizerResultEntity.Timestamps.Add(result.Second);
                                 lastToken = "▁" + currText + "▁";
                                 lastTimestamp = result.Second;
@@ -282,7 +319,14 @@ namespace AliParaformerAsr
 
                     }
                 }
-                text_result = text_result.Replace("@@▁▁", "").Replace("▁▁", " ").Replace("@@", " ").Replace("▁", "");
+                if (text_result.IndexOf("@@▁▁") > 0 || text_result.IndexOf("▁▁▁") < 0)
+                {
+                    text_result = text_result.Replace("@@▁▁", "").Replace("▁▁", " ").Replace("@@", " ").Replace("▁", " ");
+                }
+                else
+                {
+                    text_result = text_result.Replace("▁▁▁", " ").Replace("▁▁", "").Replace("▁", "");
+                }
                 text_results.Add(text_result);
                 offlineRecognizerResultEntity.Text = text_result;
                 offlineRecognizerResultEntity.TextLen = text_result.Length;
