@@ -128,18 +128,18 @@ namespace MauiApp1.Utils
             }
         }
 
-        public bool GetDownloadState(string[] fileNames, string rootFolderName, string subFolderName, string[] md5Strs)
+        public bool GetDownloadState(Dictionary<string,string> modelFiles, string rootFolderName, string subFolderName)
         {
             bool state=true;
             var downloadFolder = Path.Combine(SysConf.ApplicationBase, rootFolderName);
             var modelFolder = Path.Combine(downloadFolder, subFolderName);
             Directory.CreateDirectory(downloadFolder);
             Directory.CreateDirectory(modelFolder);
-            for (int i = 0; i < fileNames.Length; i++)
+            foreach(var modelFile in modelFiles)
             {
-                string fileFullname = Path.Combine(modelFolder, fileNames[i]);
+                string fileFullname = Path.Combine(modelFolder, modelFile.Key);
                 if (File.Exists(fileFullname))
-                {                    
+                {
                     FileInfo fileInfo = new FileInfo(fileFullname);
                     if (fileInfo.Length == 0)
                     {
@@ -148,7 +148,7 @@ namespace MauiApp1.Utils
                     else
                     {
                         string md5str = GetMD5Hash(fileFullname);
-                        if (!md5str.Equals(md5Strs[i]))
+                        if (!md5str.Equals(modelFile.Value))
                         {
                             state = state && false;
                         }
@@ -159,7 +159,6 @@ namespace MauiApp1.Utils
                     state = state && false;
                 }
             }
-            
             return state;
         }
 
