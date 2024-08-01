@@ -2,9 +2,7 @@
 
 ##### 简介：
 
-**项目功能：语音识别。**
-
-**项目使用C#编写，调用Microsoft.ML.OnnxRuntime对onnx模型进行解码，支持框架.Net6.0+，支持跨平台编译，支持AOT编译。项目以库的形式进行调用，部署非常方便。**
+**AliParaformerAsr是一个使用C#编写的“语音识别”库，底层调用Microsoft.ML.OnnxRuntime对onnx模型进行解码，支持框架.Net6.0+，支持跨平台编译，支持AOT编译。使用简单方便。**
 
 ##### 支持的模型（ONNX）
 
@@ -13,29 +11,13 @@
 |  paraformer-large-zh-en-offline | 非流式  | cpu-rtf-0.03  | 中文、英文  |  否 | 是  | [huggingface](https://huggingface.co/manyeyes/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx "huggingface"),  [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-offline "modelscope") |
 |  paraformer-large-en-offline | 非流式 | cpu-rtf-0.05  |  英文 |  否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-en-offline "modelscope")  |
 |  paraformer-large-zh-en-online | 流式 | cpu-rtf-0.12  |  中文、英文 |  否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-online "modelscope")  |
-|  SenseVoiceSmall |  非流式 | cpu-rtf-0.15  |  中文、粤语、英文、日语、韩语 | 是  | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/sensevoice-small-onnx "modelscope"), [modelscope-split-embed](https://www.modelscope.cn/models/manyeyes/sensevoice-small-split-embed-onnx "modelscope-split-embed") |
+|  SenseVoiceSmall |  非流式 | cpu-rtf-0.11  |  中文、粤语、英文、日语、韩语 | 是  | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/sensevoice-small-onnx "modelscope"), [modelscope-split-embed](https://www.modelscope.cn/models/manyeyes/sensevoice-small-split-embed-onnx "modelscope-split-embed") |
 
-##### 用途：
-Paraformer是达摩院语音团队提出的一种高效的非自回归端到端语音识别框架。本项目为Paraformer中文通用语音识别模型，采用工业级数万小时的标注音频进行模型训练，保证了模型的通用识别效果。模型可以被应用于语音输入法、语音导航、智能会议纪要等场景。准确率：高。
 
-##### Paraformer模型结构：
-![](https://www.modelscope.cn/api/v1/models/damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch/repo?Revision=master&FilePath=fig/struct.png&View=true)
-
-Paraformer模型结构如上图所示，由 Encoder、Predictor、Sampler、Decoder 与 Loss function 五部分组成。Encoder可以采用不同的网络结构，例如self-attention，conformer，SAN-M等。Predictor 为两层FFN，预测目标文字个数以及抽取目标文字对应的声学向量。Sampler 为无可学习参数模块，依据输入的声学向量和目标向量，生产含有语义的特征向量。Decoder 结构与自回归模型类似，为双向建模（自回归为单向建模）。Loss function 部分，除了交叉熵（CE）与 MWER 区分性优化目标，还包括了 Predictor 优化目标 MAE。
-
-其核心点主要有：
-
-Predictor 模块：基于 Continuous integrate-and-fire (CIF) 的 预测器 (Predictor) 来抽取目标文字对应的声学特征向量，可以更加准确的预测语音中目标文字个数。
-Sampler：通过采样，将声学特征向量与目标文字向量变换成含有语义信息的特征向量，配合双向的 Decoder 来增强模型对于上下文的建模能力。
-基于负样本采样的 MWER 训练准则。
-更详细的细节见：
-
-论文： [Paraformer: Fast and Accurate Parallel Transformer for Non-autoregressive End-to-End Speech Recognition](https://arxiv.org/abs/2206.08317 "Paraformer: Fast and Accurate Parallel Transformer for Non-autoregressive End-to-End Speech Recognition")
-
-论文解读：[Paraformer: 高识别率、高计算效率的单轮非自回归端到端语音识别模型](https://mp.weixin.qq.com/s/xQ87isj5_wxWiQs4qUXtVw "Paraformer: 高识别率、高计算效率的单轮非自回归端到端语音识别模型")
-
-##### ASR常用参数（参考：asr.yaml文件）：
-用于解码的asr.yaml配置参数，取自官方模型配置config.yaml原文件。便于跟进和升级。
+##### 配置说明（参考：asr.yaml文件）：
+用于解码的asr.yaml配置参数，大部分不需要修改。
+可修改的参数：
+use_itn: true（在sensevoicesmall的配置中开启之后，可实现逆文本正则化。）
 
 ## 离线（非流式）模型调用方法：
 
@@ -232,17 +214,15 @@ rtf:0.10644441464909593
 Hello, World!
 ```
 
-*
-相关工程：
 
-语音端点检测，解决长音频合理切分的问题，项目地址：[AliFsmnVad](https://github.com/manyeyes/AliFsmnVad "AliFsmnVad") 
+###### 相关工程：
+* 语音端点检测，解决长音频合理切分的问题，项目地址：[AliFsmnVad](https://github.com/manyeyes/AliFsmnVad "AliFsmnVad") 
+* 文本标点预测，解决识别结果没有标点的问题，项目地址：[AliCTTransformerPunc](https://github.com/manyeyes/AliCTTransformerPunc "AliCTTransformerPunc")
 
-文本标点恢复，解决识别结果没有标点的问题，项目地址：[AliCTTransformerPunc](https://github.com/manyeyes/AliCTTransformerPunc "AliCTTransformerPunc")
-*
-
-其他说明：
+###### 其他说明：
 
 测试用例：AliParaformerAsr.Examples。
+测试CPU：Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz   2.59 GHz
 支持平台：
 Windows 7 SP1或更高版本,
 macOS 10.13 (High Sierra) 或更高版本,ios等，
@@ -250,12 +230,28 @@ Linux 发行版（需要特定的依赖关系，详见.NET 6支持的Linux发行
 Android（Android 5.0 (API 21) 或更高版本）。
 示例中计算音频samples：NAudio库。
 
-官方介绍：
+## 模型介绍：
 
+##### 模型用途：
+Paraformer是达摩院语音团队提出的一种高效的非自回归端到端语音识别框架。本项目为Paraformer中文通用语音识别模型，采用工业级数万小时的标注音频进行模型训练，保证了模型的通用识别效果。模型可以被应用于语音输入法、语音导航、智能会议纪要等场景。准确率：高。
+
+##### 模型结构：
+![](https://www.modelscope.cn/api/v1/models/damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch/repo?Revision=master&FilePath=fig/struct.png&View=true)
+
+Paraformer模型结构如上图所示，由 Encoder、Predictor、Sampler、Decoder 与 Loss function 五部分组成。Encoder可以采用不同的网络结构，例如self-attention，conformer，SAN-M等。Predictor 为两层FFN，预测目标文字个数以及抽取目标文字对应的声学向量。Sampler 为无可学习参数模块，依据输入的声学向量和目标向量，生产含有语义的特征向量。Decoder 结构与自回归模型类似，为双向建模（自回归为单向建模）。Loss function 部分，除了交叉熵（CE）与 MWER 区分性优化目标，还包括了 Predictor 优化目标 MAE。
+
+##### 主要核心点：
+Predictor 模块：基于 Continuous integrate-and-fire (CIF) 的 预测器 (Predictor) 来抽取目标文字对应的声学特征向量，可以更加准确的预测语音中目标文字个数。
+Sampler：通过采样，将声学特征向量与目标文字向量变换成含有语义信息的特征向量，配合双向的 Decoder 来增强模型对于上下文的建模能力。
+基于负样本采样的 MWER 训练准则。
+
+##### 更详细的资料：
 * [paraformer-large-offline（非流式）](https://www.modelscope.cn/models/damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch "paraformer-large-offline（非流式）")
 * [paraformer-large-online（流式）](https://www.modelscope.cn/models/iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online "paraformer-large-online（流式）")
 * [SenseVoiceSmall（非流式）](https://www.modelscope.cn/models/iic/SenseVoiceSmall "SenseVoiceSmall（非流式）")
+* 论文： [Paraformer: Fast and Accurate Parallel Transformer for Non-autoregressive End-to-End Speech Recognition](https://arxiv.org/abs/2206.08317 "Paraformer: Fast and Accurate Parallel Transformer for Non-autoregressive End-to-End Speech Recognition")
+* 论文解读：[Paraformer: 高识别率、高计算效率的单轮非自回归端到端语音识别模型](https://mp.weixin.qq.com/s/xQ87isj5_wxWiQs4qUXtVw "Paraformer: 高识别率、高计算效率的单轮非自回归端到端语音识别模型")
 
-参考
+引用参考
 ----------
 [1] https://github.com/alibaba-damo-academy/FunASR
