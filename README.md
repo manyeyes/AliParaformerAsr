@@ -11,7 +11,7 @@
 |  paraformer-large-zh-en-offline | 非流式  | cpu-rtf-0.03  | 中文、英文  |  否 | 是  | [huggingface](https://huggingface.co/manyeyes/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx "huggingface"),  [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-offline "modelscope") |
 |  paraformer-large-en-offline | 非流式 | cpu-rtf-0.05  |  英文 |  否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-en-offline "modelscope")  |
 |  paraformer-large-zh-en-online | 流式 | cpu-rtf-0.12  |  中文、英文 |  否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-online "modelscope")  |
-|  SenseVoiceSmall |  非流式 | cpu-rtf-0.15  |  中文、粤语、英文、日语、韩语 | 是  | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/sensevoice-small-onnx "modelscope"), [modelscope-split-embed](https://www.modelscope.cn/models/manyeyes/sensevoice-small-split-embed-onnx "modelscope-split-embed") |
+|  SenseVoiceSmall |  非流式 | cpu-rtf-0.11  |  中文、粤语、英文、日语、韩语 | 是  | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/sensevoice-small-onnx "modelscope"), [modelscope-split-embed](https://www.modelscope.cn/models/manyeyes/sensevoice-small-split-embed-onnx "modelscope-split-embed") |
 
 
 ##### 配置说明（参考：asr.yaml文件）：
