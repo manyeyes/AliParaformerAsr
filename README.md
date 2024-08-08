@@ -8,10 +8,11 @@
 
 | 模型名称  |  类型 | 实时率RTF  | 支持语言  | 标点  |  时间戳 | 下载地址  |
 | ------------ | ------------ | ------------ | ------------ | ------------ | ------------ | ------------ |
-|  paraformer-large-zh-en-offline | 非流式  | cpu-rtf-0.03  | 中文、英文  |  否 | 是  | [huggingface](https://huggingface.co/manyeyes/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx "huggingface"),  [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-offline "modelscope") |
-|  paraformer-large-en-offline | 非流式 | cpu-rtf-0.05  |  英文 |  否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-en-offline "modelscope")  |
-|  paraformer-large-zh-en-online | 流式 | cpu-rtf-0.12  |  中文、英文 |  否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-model-online "modelscope")  |
-|  SenseVoiceSmall |  非流式 | cpu-rtf-0.11  |  中文、粤语、英文、日语、韩语 | 是  | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/sensevoice-small-onnx "modelscope"), [modelscope-split-embed](https://www.modelscope.cn/models/manyeyes/sensevoice-small-split-embed-onnx "modelscope-split-embed") |
+|  paraformer-large-zh-en-onnx-offline | 非流式  | cpu-rtf-0.03  | 中文、英文  |  否 | 否  | [huggingface](https://huggingface.co/manyeyes/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx "huggingface"),  [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-zh-en-onnx-offline "modelscope") |
+|  paraformer-large-zh-en-timestamp-onnx-offline | 非流式  | cpu-rtf-0.04  | 中文、英文  |  否 | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-zh-en-timestamp-onnx-offline "modelscope") |
+|  paraformer-large-en-onnx-offline | 非流式 | cpu-rtf-0.05  |  英文 |  否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-en-onnx-offline "modelscope")  |
+|  paraformer-large-zh-en-onnx-online | 流式 | cpu-rtf-0.12  |  中文、英文 |  否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-zh-en-onnx-online "modelscope")  |
+|  SenseVoiceSmall |  非流式 | cpu-rtf-0.06  |  中文、粤语、英文、日语、韩语 | 是  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/sensevoice-small-onnx "modelscope"), [modelscope-split-embed](https://www.modelscope.cn/models/manyeyes/sensevoice-small-split-embed-onnx "modelscope-split-embed") |
 
 
 ##### 配置说明（参考：asr.yaml文件）：
@@ -228,7 +229,6 @@ Windows 7 SP1或更高版本,
 macOS 10.13 (High Sierra) 或更高版本,ios等，
 Linux 发行版（需要特定的依赖关系，详见.NET 6支持的Linux发行版列表），
 Android（Android 5.0 (API 21) 或更高版本）。
-示例中计算音频samples：NAudio库。
 
 ## 模型介绍：
 
@@ -255,3 +255,4 @@ Sampler：通过采样，将声学特征向量与目标文字向量变换成含�
 引用参考
 ----------
 [1] https://github.com/alibaba-damo-academy/FunASR
+[2] https://github.com/naudio/NAudio
