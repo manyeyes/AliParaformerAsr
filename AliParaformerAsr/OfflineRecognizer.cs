@@ -101,22 +101,22 @@ namespace AliParaformerAsr
                             item[j] = (int)token_num;
                             timestamps.Add(new int[] { 0, 0 });
                         }
-                        List<Int64> item1 = new List<Int64>(item);
-                        item1.Remove(item1.First());
-                        List<Int64> item2 = new List<Int64>(item);
-                        item2.RemoveAt(item2.Count - 1);
-                        List<Int64> newItem = new List<Int64>();
-                        int itemIndex = 0;
-                        foreach (var itemTemp in item1.Zip<Int64, Int64>(item2))
-                        {
-                            if (itemTemp.First != itemTemp.Second)
-                            {
-                                newItem.Add(item[itemIndex]);
-                            }
-                            itemIndex++;
-                        }
-                        newItem.Add(item.Last());
-                        item = newItem.ToArray();
+                        //List<Int64> item1 = new List<Int64>(item);
+                        //item1.Remove(item1.First());
+                        //List<Int64> item2 = new List<Int64>(item);
+                        //item2.RemoveAt(item2.Count - 1);
+                        //List<Int64> newItem = new List<Int64>();
+                        //int itemIndex = 0;
+                        //foreach (var itemTemp in item1.Zip<Int64, Int64>(item2))
+                        //{
+                        //    if (itemTemp.First != itemTemp.Second)
+                        //    {
+                        //        newItem.Add(item[itemIndex]);
+                        //    }
+                        //    itemIndex++;
+                        //}
+                        //newItem.Add(item.Last());
+                        //item = newItem.ToArray();
                         token_nums.Add(item);
                         timestamps_list.Add(timestamps);
                     }
@@ -300,9 +300,15 @@ namespace AliParaformerAsr
                                     temp.AddRange(result.Second.ToList());
                                     currTimestamp = temp.ToArray();
                                 }
-                                offlineRecognizerResultEntity.Tokens.Remove(offlineRecognizerResultEntity.Tokens.Last());
+                                if (offlineRecognizerResultEntity.Tokens.Count > 0)
+                                {
+                                    offlineRecognizerResultEntity.Tokens.Remove(offlineRecognizerResultEntity.Tokens.Last());
+                                }
                                 offlineRecognizerResultEntity.Tokens.Add(currToken.Replace("▁", ""));
-                                offlineRecognizerResultEntity.Timestamps.Remove(offlineRecognizerResultEntity.Timestamps.Last());
+                                if (offlineRecognizerResultEntity.Timestamps.Count > 0)
+                                {
+                                    offlineRecognizerResultEntity.Timestamps.Remove(offlineRecognizerResultEntity.Timestamps.Last());
+                                }
                                 offlineRecognizerResultEntity.Timestamps.Add(currTimestamp);
                                 lastToken = currToken;
                                 lastTimestamp = currTimestamp;
