@@ -15,13 +15,31 @@
 |  paraformer-large-zh-yue-en-timestamp-onnx-offline-dengcunqin-20240805 | 非流式 | 中文、粤语、英文 |  否  | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/paraformer-large-zh-yue-en-timestamp-onnx-offline-dengcunqin-20240805 "modelscope")  |
 |  paraformer-large-zh-yue-en-onnx-offline-dengcunqin-20240805 |  非流式 | 中文、粤语、英文 | 否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/paraformer-large-zh-yue-en-onnx-offline-dengcunqin-20240805 "modelscope") |
 |  paraformer-large-zh-yue-en-onnx-online-dengcunqin-20240208 |  流式 | 中文、粤语、英文 | 否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/paraformer-large-zh-yue-en-onnx-online-dengcunqin-20240208 "modelscope") |
+|  paraformer-seaco-large-zh-timestamp-onnx-offline |  非流式 | 中文、热词 | 否  | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/paraformer-seaco-large-zh-timestamp-onnx-offline "modelscope") |
 |  SenseVoiceSmall |  非流式 | 中文、粤语、英文、日语、韩语 | 是  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/sensevoice-small-onnx "modelscope"), [modelscope-split-embed](https://www.modelscope.cn/models/manyeyes/sensevoice-small-split-embed-onnx "modelscope-split-embed") |
 
 
-##### 配置说明（参考：asr.yaml文件）：
+##### 如何使用
+###### 1.克隆项目源码
+```bash
+cd /path/to
+git clone https://github.com/manyeyes/AliParaformerAsr.git
+```
+###### 2.下载上述列表中的模型到目录：/path/to/AliParaformerAsr/AliParaformerAsr.Examples
+```bash
+cd /path/to/AliParaformerAsr/AliParaformerAsr.Examples
+git clone https://www.modelscope.cn/manyeyes/[模型名称].git
+```
+###### 3.使用vs2022(或其他IDE)加载工程，
+###### 4.将模型目录中的文件设置为：复制到输出目录->如果较新则复制
+###### 5.修改示例中代码：string modelName =[模型目录名]
+非流式示例：OfflineRecognizer.cs
+流式示例：OnlineRecognizer.cs
+###### 6.配置说明（参考：asr.yaml文件）：
 用于解码的asr.yaml配置参数，大部分不需要修改。
 可修改的参数：
 use_itn: true（在sensevoicesmall的配置中开启之后，可实现逆文本正则化。）
+###### 7.运行项目
 
 ## 离线（非流式）模型调用方法：
 
@@ -29,6 +47,8 @@ use_itn: true（在sensevoicesmall的配置中开启之后，可实现逆文本�
 using AliParaformerAsr;
 
 ###### 2.模型初始化和配置
+paraformer模型调用方式：
+
 ```csharp
 string applicationBase = AppDomain.CurrentDomain.BaseDirectory;
 string modelName = "speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx";
@@ -37,6 +57,20 @@ string configFilePath = applicationBase + "./" + modelName + "/asr.yaml";
 string mvnFilePath = applicationBase + "./" + modelName + "/am.mvn";
 string tokensFilePath = applicationBase + "./" + modelName + "/tokens.txt";
 AliParaformerAsr.OfflineRecognizer offlineRecognizer = new OfflineRecognizer(modelFilePath, configFilePath, mvnFilePath, tokensFilePath);
+```
+SeACo-paraformer模型调用方式：
+1.在模型目录中修改hotword.txt文件，添加自定义热词（目前支持“每一行一个中文词汇”的格式）
+2.在代码中新增参数：modelebFilePath, hotwordFilePath
+```csharp
+string applicationBase = AppDomain.CurrentDomain.BaseDirectory;
+string modelName = "paraformer-seaco-large-zh-timestamp-onnx-offline";
+string modelFilePath = applicationBase + "./" + modelName + "/model.int8.onnx";
+string modelebFilePath = applicationBase + "./" + modelName + "/model_eb.int8.onnx";
+string configFilePath = applicationBase + "./" + modelName + "/asr.yaml";
+string mvnFilePath = applicationBase + "./" + modelName + "/am.mvn";
+string hotwordFilePath = applicationBase + "./" + modelName + "/hotword.txt";
+string tokensFilePath = applicationBase + "./" + modelName + "/tokens.txt";
+OfflineRecognizer offlineRecognizer = new OfflineRecognizer(modelFilePath: modelFilePath, configFilePath: configFilePath, mvnFilePath, tokensFilePath: tokensFilePath, modelebFilePath: modelebFilePath, hotwordFilePath: hotwordFilePath);
 ```
 ###### 3.调用
 ```csharp

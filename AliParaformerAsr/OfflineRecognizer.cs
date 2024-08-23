@@ -23,11 +23,18 @@ namespace AliParaformerAsr
         private string _mvnFilePath;
         private IOfflineProj _offlineProj;
 
-        public OfflineRecognizer(string modelFilePath, string configFilePath, string mvnFilePath, string tokensFilePath, int batchSize = 1, int threadsNum = 1)
+        public OfflineRecognizer(string modelFilePath, string configFilePath, string mvnFilePath, string tokensFilePath, string modelebFilePath = "", string hotwordFilePath = "", int batchSize = 1, int threadsNum = 1)
         {
-            _offlineModel = new OfflineModel(modelFilePath, threadsNum);
+            _offlineModel = new OfflineModel(modelFilePath: modelFilePath, modelebFilePath: modelebFilePath, hotwordFilePath: hotwordFilePath, threadsNum);
             _confEntity = YamlHelper.ReadYaml<ConfEntity>(configFilePath);
             _offlineModel.Use_itn = _confEntity.use_itn;
+            _mvnFilePath = mvnFilePath;
+            _tokens = File.ReadAllLines(tokensFilePath);
+            if (!string.IsNullOrEmpty(hotwordFilePath))
+            {
+                List<int[]>? hotwords = GetHotwords(_tokens, hotwordFilePath);
+                _offlineModel.Hotwords = hotwords;
+            }
             switch (_confEntity.model.ToLower())
             {
                 case "paraformer":
@@ -36,15 +43,32 @@ namespace AliParaformerAsr
                 case "sensevoicesmall":
                     _offlineProj = new OfflineProjOfSenseVoiceSmall(_offlineModel);
                     break;
+                case "seacoparaformer":
+                    _offlineProj = new OfflineProjOfSeacoParaformer(_offlineModel);
+                    break;
                 default:
                     _offlineProj = new OfflineProjOfParaformer(_offlineModel);
                     break;
-            }
-            _tokens = File.ReadAllLines(tokensFilePath);
-
-            _mvnFilePath = mvnFilePath;
+            }            
             ILoggerFactory loggerFactory = new LoggerFactory();
             _logger = new Logger<OfflineRecognizer>(loggerFactory);
+        }
+        private List<int[]>? GetHotwords(string[] tokens,string hotwordFilePath)
+        {
+            List<int[]>? hotwords = new List<int[]>();
+            string[] sentences= File.ReadAllLines(hotwordFilePath);
+            foreach(string sentence in sentences)
+            {
+                string[] wordList = new string[] { sentence };
+                foreach(string word in wordList)
+                {
+                    List<int> ids = word.ToCharArray().Select(x => Array.IndexOf(_tokens, x.ToString())).Where(x => x != -1).ToList();
+                    hotwords.Add(ids.ToArray());
+                }
+                
+            }
+            hotwords.Add(new int[] { _offlineModel.Sos_eos_id });
+            return hotwords;
         }
 
         public OfflineStream CreateOfflineStream()
@@ -52,6 +76,7 @@ namespace AliParaformerAsr
             OfflineStream offlineStream = new OfflineStream(_mvnFilePath, _confEntity);
             return offlineStream;
         }
+
         public OfflineRecognizerResultEntity GetResult(OfflineStream stream)
         {
             List<OfflineStream> streams = new List<OfflineStream>();
@@ -67,6 +92,7 @@ namespace AliParaformerAsr
             List<OfflineRecognizerResultEntity> text_results = this.DecodeMulti(streams);
             return text_results;
         }
+
         private void Forward(List<OfflineStream> streams)
         {
             if (streams.Count == 0)
@@ -363,6 +389,13 @@ namespace AliParaformerAsr
                 return false;
         }
 
+        public void DisposeOfflineStream(OfflineStream offlineStream)
+        {
+            if (offlineStream != null)
+            {
+                offlineStream.Dispose();
+            }
+        }
         protected virtual void Dispose(bool disposing)
         {
             if (!_disposed)
