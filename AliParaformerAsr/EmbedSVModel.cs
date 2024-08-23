@@ -6,11 +6,11 @@ using System.Reflection;
 
 namespace AliParaformerAsr
 {
-    public class EmbedModel
+    public class EmbedSVModel
     {
         private InferenceSession _modelSession;
 
-        public EmbedModel(int threadsNum = 2)
+        public EmbedSVModel(int threadsNum = 2)
         {
             _modelSession = initModel(threadsNum);
         }

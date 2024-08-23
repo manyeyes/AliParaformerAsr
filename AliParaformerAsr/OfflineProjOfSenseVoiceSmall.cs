@@ -13,7 +13,7 @@ namespace AliParaformerAsr
         private bool _disposed;
 
         private InferenceSession _modelSession;
-        private EmbedModel _embedModel;
+        private EmbedSVModel _embedModel;
         private int _blank_id = 0;
         private int _sos_eos_id = 1;
         private int _unk_id = 2;
@@ -34,7 +34,7 @@ namespace AliParaformerAsr
             var inputMeta = _modelSession.InputMetadata;
             if (!inputMeta.ContainsKey("language") && !inputMeta.ContainsKey("textnorm"))
             {
-                _embedModel = new EmbedModel();
+                _embedModel = new EmbedSVModel();
             }
             _blank_id = offlineModel.Blank_id;
             _sos_eos_id = offlineModel.Sos_eos_id;
