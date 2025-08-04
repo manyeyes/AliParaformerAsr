@@ -1,7 +1,7 @@
 ﻿// See https://github.com/manyeyes for more information
 // Copyright (c)  2023 by manyeyes
 using AliParaformerAsr.Model;
-using KaldiNativeFbankSharp;
+using SpeechFeatures;
 
 namespace AliParaformerAsr
 {
@@ -14,12 +14,10 @@ namespace AliParaformerAsr
         private FrontendConfEntity _frontendConfEntity;
         OnlineFbank _onlineFbank;
         private CmvnEntity _cmvnEntity;
-        private static int _fbank_beg_idx = 0;
 
         public WavFrontend(string mvnFilePath, FrontendConfEntity frontendConfEntity)
         {
             _frontendConfEntity = frontendConfEntity;
-            _fbank_beg_idx = 0;
             _onlineFbank = new OnlineFbank(
                 dither: _frontendConfEntity.dither,
                 snip_edges: _frontendConfEntity.snip_edges,
@@ -37,7 +35,6 @@ namespace AliParaformerAsr
             float[] fbanks = _onlineFbank.GetFbank(samples);
             return fbanks;
         }
-
 
         public float[] LfrCmvn(float[] fbanks)
         {

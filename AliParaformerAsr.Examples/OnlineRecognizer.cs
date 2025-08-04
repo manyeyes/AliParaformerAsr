@@ -97,8 +97,8 @@ namespace AliParaformerAsr.Examples
                         }
                     }
                 }
-                List<AliParaformerAsr.OnlineRecognizerResultEntity> results_batch = onlineRecognizer.GetResults(streams);
-                foreach (AliParaformerAsr.OnlineRecognizerResultEntity result in results_batch)
+                List<AliParaformerAsr.Model.OnlineRecognizerResultEntity> results_batch = onlineRecognizer.GetResults(streams);
+                foreach (AliParaformerAsr.Model.OnlineRecognizerResultEntity result in results_batch)
                 {
                     Console.WriteLine(result.text);
                 }

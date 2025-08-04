@@ -1,7 +1,6 @@
 ﻿// See https://github.com/manyeyes for more information
 // Copyright (c)  2023 by manyeyes
 using AliParaformerAsr.Model;
-using AliParaformerAsr.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
@@ -19,28 +18,19 @@ namespace AliParaformerAsr
 
         private OnlineModel _onlineModel;
         private readonly ILogger<OnlineRecognizer> _logger;
-        private string _mvnFilePath;
-        private string _frontend;
-        private FrontendConfEntity _frontendConfEntity;
         private string[] _tokens;
-        private ConfEntity _asrYamlEntity;
-        //private int _batchSize = 1;
         private List<float[]> _next_statesList=new List<float[]>();
 
         public OnlineRecognizer(string encoderFilePath, string decoderFilePath, string configFilePath, string mvnFilePath, string tokensFilePath, int threadsNum = 1)
         {
-            _onlineModel = new OnlineModel(encoderFilePath, decoderFilePath, threadsNum);
-            _mvnFilePath = mvnFilePath;
-            _tokens = File.ReadAllLines(tokensFilePath);
-
-            _asrYamlEntity = YamlHelper.ReadYaml<ConfEntity>(configFilePath);
+            _onlineModel = new OnlineModel(encoderFilePath, decoderFilePath, mvnFilePath, configFilePath, threadsNum);
+            _tokens = Utils.PreloadHelper.ReadTokens(tokensFilePath);
             ILoggerFactory loggerFactory = new LoggerFactory();
             _logger = new Logger<OnlineRecognizer>(loggerFactory);
         }
-
         public OnlineStream CreateOnlineStream()
         {
-            OnlineStream onlineStream = new OnlineStream(_mvnFilePath, _asrYamlEntity,_onlineModel.ChunkLength);
+            OnlineStream onlineStream = new OnlineStream(_onlineModel);
             return onlineStream;
         }
         public OnlineRecognizerResultEntity GetResult(OnlineStream stream)
@@ -174,7 +164,7 @@ namespace AliParaformerAsr
                     float[] hiddens_item = new float[hidden_size];
                     hiddens_item = cacheHiddens[b][j];
                     //////////////////
-                    if (alpha + integrate < _asrYamlEntity.predictor_conf.threshold)
+                    if (alpha + integrate < _onlineModel.ConfEntity.predictor_conf.threshold)
                     {
                         integrate += alpha;
                         list_fire.Add(integrate);
@@ -186,7 +176,7 @@ namespace AliParaformerAsr
                     }
                     else
                     {
-                        float[] hiddens_item_temp = hiddens_item.Select(x => (_asrYamlEntity.predictor_conf.threshold - integrate) * x).ToArray();
+                        float[] hiddens_item_temp = hiddens_item.Select(x => (_onlineModel.ConfEntity.predictor_conf.threshold - integrate) * x).ToArray();
                         for (int framesIndex = 0; framesIndex < frames.Length; framesIndex++)
                         {
                             frames[framesIndex] += hiddens_item_temp[framesIndex];
@@ -194,7 +184,7 @@ namespace AliParaformerAsr
                         list_frame.Add(frames);
                         integrate += alpha;
                         list_fire.Add(integrate);
-                        integrate -= _asrYamlEntity.predictor_conf.threshold;
+                        integrate -= _onlineModel.ConfEntity.predictor_conf.threshold;
                         frames = hiddens_item.Select(x => integrate * x).ToArray();
                     }
                 }

@@ -13,7 +13,7 @@ namespace AliParaformerAsr
         private bool _disposed;
 
         private InferenceSession _modelSession;
-        private EmbedSVModel _embedModel;
+        private EmbedSVModel _embedSVModel;
         private int _blank_id = 0;
         private int _sos_eos_id = 1;
         private int _unk_id = 2;
@@ -34,7 +34,7 @@ namespace AliParaformerAsr
             var inputMeta = _modelSession.InputMetadata;
             if (!inputMeta.ContainsKey("language") && !inputMeta.ContainsKey("textnorm"))
             {
-                _embedModel = new EmbedSVModel();
+                _embedSVModel = new EmbedSVModel();
             }
             _blank_id = offlineModel.Blank_id;
             _sos_eos_id = offlineModel.Sos_eos_id;
@@ -79,15 +79,15 @@ namespace AliParaformerAsr
                     float[]? speech = offlineInputEntity.Speech;
                     if (speech != null)
                     {
-                        float[] language_query = _embedModel.Forward(new Int64[] { languageId });
-                        float[] textnorm_query = _embedModel.Forward(new long[] { textnormId });
+                        float[] language_query = _embedSVModel.Forward(new Int64[] { languageId });
+                        float[] textnorm_query = _embedSVModel.Forward(new long[] { textnormId });
                         //
                         float[] tempSpeech = new float[speech.Length + 560];
                         Array.Copy(textnorm_query, 0, tempSpeech, 0, textnorm_query.Length);
                         Array.Copy(speech, 0, tempSpeech, textnorm_query.Length, speech.Length);
                         speech = tempSpeech;
                         //
-                        float[] event_emo_query = _embedModel.Forward(new Int64[] { 1, 2 });
+                        float[] event_emo_query = _embedSVModel.Forward(new Int64[] { 1, 2 });
                         float[] input_query = new float[language_query.Length + event_emo_query.Length];
                         Array.Copy(language_query, 0, input_query, 0, language_query.Length);
                         Array.Copy(event_emo_query, 0, input_query, language_query.Length, event_emo_query.Length);
