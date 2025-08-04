@@ -1,5 +1,7 @@
 ﻿// See https://github.com/manyeyes for more information
 // Copyright (c)  2023 by manyeyes
+using AliParaformerAsr.Model;
+using AliParaformerAsr.Utils;
 using Microsoft.ML.OnnxRuntime;
 using System.Diagnostics;
 
@@ -13,11 +15,17 @@ namespace AliParaformerAsr
         private int _lfr = 10;
         private int _chunkLength;
         private int _shiftLength;
-        
-        public OnlineModel(string encoderFilePath, string decoderFilePath, int threadsNum = 2)
+        private int _featureDim = 80;
+        private int _sampleRate = 16000;
+        private string _mvnFilePath;
+        private ConfEntity? _confEntity;
+
+        public OnlineModel(string encoderFilePath, string decoderFilePath, string mvnFilePath, string configFilePath, int threadsNum = 2)
         {
             _encoderSession = initModel(encoderFilePath, threadsNum);
             _decoderSession = initModel(decoderFilePath, threadsNum);
+            _confEntity = LoadConf(configFilePath);
+            _mvnFilePath = mvnFilePath;
             _shiftLength = _chunkLength;
             _chunkLength = _lfr * 6;
         }
@@ -26,9 +34,34 @@ namespace AliParaformerAsr
         public InferenceSession DecoderSession { get => _decoderSession; set => _decoderSession = value; }
         public int ChunkLength { get => _chunkLength; set => _chunkLength = value; }
         public int ShiftLength { get => _shiftLength; set => _shiftLength = value; }
+        public int FeatureDim { get => _featureDim; set => _featureDim = value; }
+        public int SampleRate { get => _sampleRate; set => _sampleRate = value; }
+        public string MvnFilePath { get => _mvnFilePath; set => _mvnFilePath = value; }
+        public ConfEntity? ConfEntity { get => _confEntity; set => _confEntity = value; }
+
+        private ConfEntity? LoadConf(string configFilePath)
+        {
+            ConfEntity? confJsonEntity = new ConfEntity();
+            if (!string.IsNullOrEmpty(configFilePath))
+            {
+                if (configFilePath.ToLower().EndsWith(".json"))
+                {
+                    confJsonEntity = Utils.PreloadHelper.ReadJson<ConfEntity>(configFilePath);
+                }
+                else if (configFilePath.ToLower().EndsWith(".yaml"))
+                {
+                    confJsonEntity = Utils.PreloadHelper.ReadYaml<ConfEntity>(configFilePath);
+                }
+            }
+            return confJsonEntity;
+        }
 
         public InferenceSession initModel(string modelFilePath, int threadsNum = 2)
         {
+            if (string.IsNullOrEmpty(modelFilePath))
+            {
+                return null;
+            }
             Microsoft.ML.OnnxRuntime.SessionOptions options = new Microsoft.ML.OnnxRuntime.SessionOptions();
             options.LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_FATAL;
             //options.AppendExecutionProvider_DML(0);
@@ -58,7 +91,7 @@ namespace AliParaformerAsr
             for (int b = 0; b < batchSize; b++)
             {
                 List<float[]> hiddensItem = new List<float[]>();
-                for(int x= b*(cifHidden.Count / batchSize); x < (b+1) * (cifHidden.Count / batchSize); x++)
+                for (int x = b * (cifHidden.Count / batchSize); x < (b + 1) * (cifHidden.Count / batchSize); x++)
                 {
                     hiddensItem.Add(cifHidden[x]);
                 }
@@ -112,7 +145,7 @@ namespace AliParaformerAsr
                 float[] cifAlphasItem = new float[cifAlpha.Length / batchSize];
                 Array.Copy(cifAlpha, b * cifAlphasItem.Length, cifAlphasItem, 0, cifAlphasItem.Length);
                 //////////
-                float[] chunk_size_5 = new float[5];                
+                float[] chunk_size_5 = new float[5];
                 if (cifAlphasItem.Length > 5)
                 {
                     Array.Copy(chunk_size_5, 0, cifAlphasItem, 0, 5);
@@ -123,7 +156,7 @@ namespace AliParaformerAsr
                 }
                 if (cifAlphasItem.Length > 15)
                 {
-                    float[] chunk_size_15 = new float[cifAlphasItem.Length-15];
+                    float[] chunk_size_15 = new float[cifAlphasItem.Length - 15];
                     Array.Copy(chunk_size_15, 0, cifAlphasItem, 15, chunk_size_15.Length);
                 }
                 //////////

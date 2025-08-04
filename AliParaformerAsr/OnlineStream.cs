@@ -6,7 +6,6 @@ namespace AliParaformerAsr
 {
     public class OnlineStream
     {
-        private FrontendConfEntity _frontendConfEntity;
         private int _fsmnDims;
         private int _fsmnLorder;
         private int _fsmnLayer;
@@ -16,6 +15,9 @@ namespace AliParaformerAsr
         private int _unk_id = 2;
         private Int64[] _hyp;
         private int _chunkLength;
+        private int _shiftLength;
+        private int _featureDim = 80;
+        private int _sampleRate = 16000;
 
         private List<Int64> _tokens = new List<Int64>();
         private List<int> _timestamps = new List<int>();
@@ -31,21 +33,27 @@ namespace AliParaformerAsr
         private int _frame_shift_sample_length;
         private int _lfr_m = 7;
         private float[] _cacheSamples = null;
-        public OnlineStream(string mvnFilePath, ConfEntity asrYamlEntity, int chunkLength)
+        public OnlineStream(OnlineModel onlineModel)
         {
             _onlineInputEntity = new OnlineInputEntity();
-            _frontendConfEntity = asrYamlEntity.frontend_conf;
-            _fsmnDims = asrYamlEntity.encoder_conf.output_size;
-            _fsmnLorder = asrYamlEntity.decoder_conf.kernel_size - 1;
-            _fsmnLayer = asrYamlEntity.decoder_conf.num_blocks;
-            _wavFrontend = new OnlineWavFrontend(mvnFilePath, asrYamlEntity.frontend_conf);
+            FrontendConfEntity frontendConfEntity = onlineModel.ConfEntity.frontend_conf;
+            frontendConfEntity.fs = onlineModel.SampleRate;
+            frontendConfEntity.n_mels = onlineModel.FeatureDim;
+            _fsmnDims = onlineModel.ConfEntity.encoder_conf.output_size;
+            _fsmnLorder = onlineModel.ConfEntity.decoder_conf.kernel_size - 1;
+            _fsmnLayer = onlineModel.ConfEntity.decoder_conf.num_blocks;
+
+            _wavFrontend = new OnlineWavFrontend(onlineModel.MvnFilePath, frontendConfEntity);
             _hyp = new Int64[] { _blank_id, _blank_id };
             _states = InitEncoderStates();
             _cifHidden = InitHidden();
             _cifAlpha = InitAlpha();
             _cacheFeats = InitCacheFeats();
-            _cacheSamples = new float[160* chunkLength];
-            _chunkLength = chunkLength;
+            _cacheSamples = new float[160 * onlineModel.ChunkLength];
+            _chunkLength = onlineModel.ChunkLength;
+            _shiftLength = onlineModel.ShiftLength;
+            _featureDim = onlineModel.FeatureDim;
+            _sampleRate = onlineModel.SampleRate;
             _tokens = new List<Int64> { _blank_id, _blank_id };
             _frame_sample_length = 25 * 16000 / 1000;
             _frame_shift_sample_length = 10 * 16000 / 1000;
@@ -68,7 +76,6 @@ namespace AliParaformerAsr
             }
             return frameNum;
         }
-
         public void AddSamples(float[] samples)
         {
             lock (obj)
@@ -128,7 +135,7 @@ namespace AliParaformerAsr
                 if (_cacheInput == null)
                 {
                     int repeatNum = (_lfr_m - 1) / 2 - 1;
-                    int featureDim = _frontendConfEntity.n_mels;
+                    int featureDim = _featureDim;
                     float[] firstFbank = new float[featureDim];
                     Array.Copy(features, 0, firstFbank, 0, firstFbank.Length);
                     float[] features_temp = new float[featureDim * repeatNum + features.Length];
@@ -158,7 +165,7 @@ namespace AliParaformerAsr
         public float[]? GetDecodeChunk(int chunkLength)
         {
             //chunkLength = _chunkLength;
-            int featureDim = _frontendConfEntity.n_mels;
+            int featureDim = _featureDim;
             lock (obj)
             {
                 float[]? decodeChunk = null;
@@ -208,7 +215,7 @@ namespace AliParaformerAsr
         {
             lock (obj)
             {
-                int featureDim = _frontendConfEntity.n_mels;
+                int featureDim = _featureDim;
                 if (shiftLength * featureDim <= _onlineInputEntity.SpeechLength)
                 {
                     float[]? features = _onlineInputEntity.Speech;
@@ -267,7 +274,7 @@ namespace AliParaformerAsr
         /// <returns></returns>
         public bool IsFinished(bool isEndpoint = false)
         {
-            int featureDim = _frontendConfEntity.n_mels;
+            int featureDim = _featureDim;
             if (isEndpoint)
             {
                 int oLen = 0;

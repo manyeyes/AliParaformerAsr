@@ -14,11 +14,11 @@ namespace AliParaformerAsr
         List<Int64> _tokens = new List<Int64>();
         List<int[]> _timestamps = new List<int[]>();
         private static object obj = new object();
-        public OfflineStream(string mvnFilePath, ConfEntity asrYamlEntity)
+        public OfflineStream(string mvnFilePath, ConfEntity confEntity)
         {
             _offlineInputEntity = new OfflineInputEntity();
 
-            _wavFrontend = new WavFrontend(mvnFilePath, asrYamlEntity.frontend_conf);
+            _wavFrontend = new WavFrontend(mvnFilePath, confEntity.frontend_conf);
             _hyp = new Int64[] { _blank_id, _blank_id };
             _tokens = new List<Int64> { _blank_id, _blank_id };
             _timestamps= new List<int[]> {  };

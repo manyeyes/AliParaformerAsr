@@ -18,6 +18,10 @@ namespace AliParaformerAsr
 
         public InferenceSession initModel(string modelFilePath, int threadsNum = 2)
         {
+            if (string.IsNullOrEmpty(modelFilePath))
+            {
+                return null;
+            }
             Microsoft.ML.OnnxRuntime.SessionOptions options = new Microsoft.ML.OnnxRuntime.SessionOptions();
             options.LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_FATAL;
             //options.AppendExecutionProvider_DML(0);

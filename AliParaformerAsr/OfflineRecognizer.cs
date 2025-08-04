@@ -26,10 +26,10 @@ namespace AliParaformerAsr
         public OfflineRecognizer(string modelFilePath, string configFilePath, string mvnFilePath, string tokensFilePath, string modelebFilePath = "", string hotwordFilePath = "", int batchSize = 1, int threadsNum = 1)
         {
             _offlineModel = new OfflineModel(modelFilePath: modelFilePath, modelebFilePath: modelebFilePath, hotwordFilePath: hotwordFilePath, threadsNum);
-            _confEntity = YamlHelper.ReadYaml<ConfEntity>(configFilePath);
+            _confEntity = LoadConf(configFilePath);
             _offlineModel.Use_itn = _confEntity.use_itn;
             _mvnFilePath = mvnFilePath;
-            _tokens = File.ReadAllLines(tokensFilePath);
+            _tokens = Utils.PreloadHelper.ReadTokens(tokensFilePath);
             if (!string.IsNullOrEmpty(hotwordFilePath))
             {
                 List<int[]>? hotwords = GetHotwords(_tokens, hotwordFilePath);
@@ -49,9 +49,25 @@ namespace AliParaformerAsr
                 default:
                     _offlineProj = new OfflineProjOfParaformer(_offlineModel);
                     break;
-            }            
+            }
             ILoggerFactory loggerFactory = new LoggerFactory();
             _logger = new Logger<OfflineRecognizer>(loggerFactory);
+        }
+        private ConfEntity? LoadConf(string configFilePath)
+        {
+            ConfEntity? confJsonEntity = new ConfEntity();
+            if (!string.IsNullOrEmpty(configFilePath))
+            {
+                if (configFilePath.ToLower().EndsWith(".json"))
+                {
+                    confJsonEntity = Utils.PreloadHelper.ReadJson<ConfEntity>(configFilePath);
+                }
+                else if (configFilePath.ToLower().EndsWith(".yaml"))
+                {
+                    confJsonEntity = Utils.PreloadHelper.ReadYaml<ConfEntity>(configFilePath);
+                }
+            }
+            return confJsonEntity;
         }
         private List<int[]>? GetHotwords(string[] tokens,string hotwordFilePath)
         {
@@ -59,13 +75,12 @@ namespace AliParaformerAsr
             string[] sentences= File.ReadAllLines(hotwordFilePath);
             foreach(string sentence in sentences)
             {
-                string[] wordList = new string[] { sentence };
-                foreach(string word in wordList)
+                string[] wordList = new string[] { sentence };//TODO:分词
+                foreach (string word in wordList)
                 {
                     List<int> ids = word.ToCharArray().Select(x => Array.IndexOf(_tokens, x.ToString())).Where(x => x != -1).ToList();
                     hotwords.Add(ids.ToArray());
-                }
-                
+                }                
             }
             hotwords.Add(new int[] { _offlineModel.Sos_eos_id });
             return hotwords;

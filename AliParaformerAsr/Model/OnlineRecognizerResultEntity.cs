@@ -1,6 +1,6 @@
 ﻿// See https://github.com/manyeyes for more information
 // Copyright (c)  2023 by manyeyes
-namespace AliParaformerAsr
+namespace AliParaformerAsr.Model
 {
     /// <summary>
     /// online recognizer result entity 
