@@ -36,6 +36,51 @@ namespace AliParaformerAsr.Examples.Utils
         }
 
         /// <summary>
+        /// get media sample
+        /// supports Windows only
+        /// </summary>
+        /// <param name="mediaFilePath"></param>
+        /// <param name="duration"></param>
+        /// <returns></returns>
+        public static float[]? GetMediaSample(string mediaFilePath, ref TimeSpan duration)
+        {
+            float[]? wavdata = null;
+            try
+            {
+                if (!File.Exists(mediaFilePath))
+                {
+                    Trace.Assert(File.Exists(mediaFilePath), "file does not exist:" + mediaFilePath);
+                    return wavdata;
+                }
+                using (MediaFoundationReader _mediaFileReader = new MediaFoundationReader(mediaFilePath))
+                {
+                    WaveFormat OLDfmt = _mediaFileReader.WaveFormat;
+                    int channels = 1;
+                    int bitsPerSample = 32;
+                    int newSampleRate = 16000;
+                    var targetFormat = new WaveFormat(newSampleRate, bitsPerSample, channels);
+                    using (var _mediaFileReaderResampler = new MediaFoundationResampler(_mediaFileReader, targetFormat))
+                    {
+                        _mediaFileReaderResampler.ResamplerQuality = 60; // 设置重采样质量 (0-100)
+                        int bytesPerFrame = _mediaFileReaderResampler.WaveFormat.BitsPerSample / 8 * OLDfmt.Channels;
+                        int bufferedFrames = (int)Math.Ceiling(_mediaFileReader.Length / bytesPerFrame
+                            * ((float)targetFormat.SampleRate / (float)OLDfmt.SampleRate)
+                            * ((float)targetFormat.Channels / OLDfmt.Channels)
+                            * (targetFormat.BitsPerSample / OLDfmt.BitsPerSample));
+                        ISampleProvider? samples = _mediaFileReaderResampler.ToSampleProvider();
+                        wavdata = new float[bufferedFrames * bytesPerFrame / sizeof(float)];
+                        samples.Read(wavdata, 0, wavdata.Length);
+                        duration = _mediaFileReader.TotalTime;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                //
+            }
+            return wavdata;
+        }
+        /// <summary>
         /// get file chunk samples
         /// supports Windows, Mac, and Linux
         /// </summary>
@@ -80,46 +125,62 @@ namespace AliParaformerAsr.Examples.Utils
             }
             return wavdatas;
         }
-
         /// <summary>
-        /// get media sample
+        /// get media chunk sample
         /// supports Windows only
         /// </summary>
         /// <param name="mediaFilePath"></param>
         /// <param name="duration"></param>
+        /// <param name="chunkSize"></param>
         /// <returns></returns>
-        public static float[]? GetMediaSample(string mediaFilePath, ref TimeSpan duration)
+        public static List<float[]> GetMediaChunkSamples(string mediaFilePath, ref TimeSpan duration, int chunkSize = 160 * 6 * 10)
         {
-            float[]? wavdata = null;
-            try
+            List<float[]> wavdatas = new List<float[]>();
+            List<TimeSpan> durations = new List<TimeSpan>();
+            if (!File.Exists(mediaFilePath))
             {
-                if (!File.Exists(mediaFilePath))
+                Trace.Assert(File.Exists(mediaFilePath), "file does not exist:" + mediaFilePath);
+                wavdatas.Add(new float[1]);
+                return wavdatas;
+            }
+            using (MediaFoundationReader _mediaFileReader = new MediaFoundationReader(mediaFilePath))
+            {
+                var OLDfmt = _mediaFileReader.WaveFormat;
+                var ieeeFloatWaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(16000, 1); // mono
+                using (var _mediaFileReaderResampler = new MediaFoundationResampler(_mediaFileReader, ieeeFloatWaveFormat))
                 {
-                    Trace.Assert(File.Exists(mediaFilePath), "file does not exist:" + mediaFilePath);
-                    return wavdata;
-                }
-                using (MediaFoundationReader _mediaFileReader = new MediaFoundationReader(mediaFilePath))
-                {
-                    WaveFormat OLDfmt = _mediaFileReader.WaveFormat;
-                    int newSampleRate = 16000;
-                    var ieeeFloatWaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(16000, 1); // mono
-                    using (var _mediaFileReaderResampler = new MediaFoundationResampler(_mediaFileReader, ieeeFloatWaveFormat))
+                    int bytesPerFrame = _mediaFileReader.WaveFormat.BitsPerSample / 8 * _mediaFileReader.WaveFormat.Channels;
+                    int bufferedFrames = (int)Math.Ceiling(_mediaFileReader.Length / bytesPerFrame * ((float)ieeeFloatWaveFormat.SampleRate / (float)OLDfmt.SampleRate / OLDfmt.Channels));
+                    ISampleProvider? _samples = _mediaFileReaderResampler.ToSampleProvider();
+                    int chunkNum = (int)Math.Floor((double)bufferedFrames / chunkSize);
+                    for (int i = 0; i < chunkNum; i++)
                     {
-                        int bytesPerFrame = _mediaFileReader.WaveFormat.BitsPerSample / 8 * _mediaFileReader.WaveFormat.Channels;
-                        int bufferedFrames = (int)Math.Ceiling(_mediaFileReader.Length / bytesPerFrame * ((float)ieeeFloatWaveFormat.SampleRate / (float)OLDfmt.SampleRate));
-                        ISampleProvider? samples = _mediaFileReaderResampler.ToSampleProvider();
-                        float[] _frames = new float[bufferedFrames];
-                        samples.Read(_frames, 0, _frames.Length);
-                        wavdata = _frames;
-                        duration = _mediaFileReader.TotalTime;
+                        int offset = 0;
+                        int dataCount = 0;
+                        if (Math.Abs(bufferedFrames - i * chunkSize) > chunkSize)
+                        {
+                            offset = i * chunkSize;
+                            dataCount = chunkSize;
+                        }
+                        else
+                        {
+                            offset = i * chunkSize;
+                            dataCount = bufferedFrames - i * chunkSize;
+                        }
+                        float[] _frames = new float[dataCount];
+                        if (i >= chunkNum - 1)
+                        {
+                            _frames = new float[chunkSize];
+                        }
+                        _samples.Read(_frames, 0, dataCount);
+                        TimeSpan curDuration = TimeSpan.FromMilliseconds(dataCount / 2 * 1000 / 16000);
+                        durations.Add(curDuration);
+                        wavdatas.Add(_frames);
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                //
-            }
-            return wavdata;
+            duration = durations.Aggregate(TimeSpan.Zero, (currentTotal, nextDuration) => currentTotal + nextDuration);
+            return wavdatas;
         }
     }
 }
