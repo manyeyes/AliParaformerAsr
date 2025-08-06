@@ -1,7 +1,6 @@
 ﻿// See https://github.com/manyeyes for more information
 // Copyright (c)  2023 by manyeyes
 using AliParaformerAsr.Model;
-using AliParaformerAsr.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using System.Text.RegularExpressions;
@@ -69,7 +68,7 @@ namespace AliParaformerAsr
             }
             return confJsonEntity;
         }
-        private List<int[]>? GetHotwords(string[] tokens,string hotwordFilePath)
+        private List<int[]>? GetHotwords(string[] tokens, string hotwordFilePath)
         {
             List<int[]>? hotwords = new List<int[]>();
             if (File.Exists(hotwordFilePath))
@@ -266,6 +265,8 @@ namespace AliParaformerAsr
                 }
             }
             new_char_list.Add(true);
+#if NET6_0_OR_GREATER
+            // .NET 6.0及更高版本：使用泛型Zip写法（保留原逻辑）
             foreach (var item in new_char_list.Zip<bool, float[]>(timestamp_list))
             {
                 bool charX = item.First;
@@ -275,6 +276,22 @@ namespace AliParaformerAsr
                     timestamps.Add(new int[] { (int)(timestamp[0] * 1000), (int)(timestamp[1] * 1000) });
                 }
             }
+#else
+// 低版本框架（如.NET Standard 2.0）：使用兼容的Zip重载
+for (int i = 0; i < new_char_list.Count && i < timestamp_list.Count; i++)
+{
+    bool charX = new_char_list[i];
+    float[] timestamp = timestamp_list[i];
+    
+    if (charX)
+    {
+        timestamps.Add(new int[] { 
+            (int)(timestamp[0] * 1000), 
+            (int)(timestamp[1] * 1000) 
+        });
+    }
+}
+#endif
             return timestamps;
         }
 
@@ -290,21 +307,29 @@ namespace AliParaformerAsr
                 string text_result = "";
                 string lastToken = "";
                 int[] lastTimestamp = null;
+#if NET6_0_OR_GREATER
                 foreach (var result in stream.Tokens.Zip<Int64, int[]>(stream.Timestamps))
                 {
                     Int64 token = result.First;
+                    int[] timestamp = result.Second;
+#else
+for (int i = 0; i < stream.Tokens.Count && i < stream.Timestamps.Count; i++)
+                {
+                    Int64 token = stream.Tokens[i];
+                    int[] timestamp = stream.Timestamps[i];
+#endif
                     if (token == 2)
                     {
                         break;
                     }
-                    string currText = _tokens[token].Split("\t")[0];
+                    string currText = _tokens[token].Split('\t')[0];
                     if (currText != "</s>" && currText != "<s>" && currText != "<blank>" && currText != "<unk>")
                     {
                         if (IsChinese(currText, true))
                         {
                             text_result += currText;
                             offlineRecognizerResultEntity.Tokens.Add(currText);
-                            offlineRecognizerResultEntity.Timestamps.Add(result.Second);
+                            offlineRecognizerResultEntity.Timestamps.Add(timestamp);
                         }
                         else
                         {
@@ -315,12 +340,12 @@ namespace AliParaformerAsr
                                 int[] currTimestamp = null;
                                 if (lastTimestamp == null)
                                 {
-                                    currTimestamp = result.Second;
+                                    currTimestamp = timestamp;
                                 }
                                 else
                                 {
                                     List<int> temp = lastTimestamp.ToList();
-                                    temp.AddRange(result.Second.ToList());
+                                    temp.AddRange(timestamp.ToList());
                                     currTimestamp = temp.ToArray();
                                 }
                                 offlineRecognizerResultEntity.Tokens.Remove(offlineRecognizerResultEntity.Tokens.Last());
@@ -336,12 +361,12 @@ namespace AliParaformerAsr
                                 int[] currTimestamp = null;
                                 if (lastTimestamp == null)
                                 {
-                                    currTimestamp = result.Second;
+                                    currTimestamp = timestamp;
                                 }
                                 else
                                 {
                                     List<int> temp = lastTimestamp.ToList();
-                                    temp.AddRange(result.Second.ToList());
+                                    temp.AddRange(timestamp.ToList());
                                     currTimestamp = temp.ToArray();
                                 }
                                 if (offlineRecognizerResultEntity.Tokens.Count > 0)
@@ -360,9 +385,9 @@ namespace AliParaformerAsr
                             else
                             {
                                 offlineRecognizerResultEntity.Tokens.Add(currText.Replace("▁", ""));
-                                offlineRecognizerResultEntity.Timestamps.Add(result.Second);
+                                offlineRecognizerResultEntity.Timestamps.Add(timestamp);
                                 lastToken = "▁" + currText + "▁";
-                                lastTimestamp = result.Second;
+                                lastTimestamp = timestamp;
                             }
 
                         }
