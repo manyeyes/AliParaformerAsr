@@ -4,72 +4,131 @@ namespace AliParaformerAsr.Examples
 {
     internal static partial class Program
     {
-        public static OfflineRecognizer initOfflineRecognizer(string modelName)
+        private static AliParaformerAsr.OfflineRecognizer? _offlineRecognizer;
+        public static OfflineRecognizer InitOfflineRecognizer(string modelName, string modelAccuracy = "int8", int threadsNum = 2)
         {
-            TimeSpan start_time = new TimeSpan(DateTime.Now.Ticks);
-            string modelFilePath = applicationBase + "./" + modelName + "/model.ts.int8.onnx";
-            string configFilePath = applicationBase + "./" + modelName + "/asr.yaml";
-            string mvnFilePath = applicationBase + "./" + modelName + "/am.mvn";
-            string tokensFilePath = applicationBase + "./" + modelName + "/tokens.txt";
-            OfflineRecognizer offlineRecognizer = new OfflineRecognizer(modelFilePath, configFilePath, mvnFilePath, tokensFilePath);
-            TimeSpan end_time = new TimeSpan(DateTime.Now.Ticks);
-            double elapsed_milliseconds_init = end_time.TotalMilliseconds - start_time.TotalMilliseconds;
-            Console.WriteLine("loading_the_model_elapsed_milliseconds:{0}", elapsed_milliseconds_init.ToString());
-            return offlineRecognizer;
+            if (_offlineRecognizer == null)
+            {
+                if (string.IsNullOrEmpty(modelName))
+                {
+                    return null;
+                }
+                try
+                {
+                    TimeSpan start_time = new TimeSpan(DateTime.Now.Ticks);
+                    string modelFilePath = applicationBase + "./" + modelName + "/model.int8.onnx";
+                    string configFilePath = applicationBase + "./" + modelName + "/asr.yaml";
+                    string mvnFilePath = applicationBase + "./" + modelName + "/am.mvn";
+                    string tokensFilePath = applicationBase + "./" + modelName + "/tokens.txt";
+                    string modelebFilePath = applicationBase + "./" + modelName + "/model_eb.int8.onnx";
+                    string hotwordFilePath = applicationBase + "./" + modelName + "/hotword.txt";
+                    _offlineRecognizer = new OfflineRecognizer(modelFilePath: modelFilePath, configFilePath: configFilePath, mvnFilePath: mvnFilePath, tokensFilePath: tokensFilePath, modelebFilePath: modelebFilePath, hotwordFilePath: hotwordFilePath, threadsNum: threadsNum);
+                    TimeSpan end_time = new TimeSpan(DateTime.Now.Ticks);
+                    double elapsed_milliseconds_init = end_time.TotalMilliseconds - start_time.TotalMilliseconds;
+                    Console.WriteLine("init_models_elapsed_milliseconds:{0}", elapsed_milliseconds_init.ToString());
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    Console.WriteLine("错误：没有访问该文件夹的权限");
+                }
+                catch (PathTooLongException)
+                {
+                    Console.WriteLine("错误：文件路径过长");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"发生错误：{ex.Message}");
+                }
+            }
+            return _offlineRecognizer;
         }
-        public static void OfflineRecognizer(List<float[]>? samples = null)
+        public static void OfflineRecognizer(string streamDecodeMethod = "one", string modelName = "paraformer-seaco-large-zh-timestamp-onnx-offline", string modelAccuracy = "int8", int threadsNum = 2, string[]? mediaFilePaths = null)
         {
-            string modelName = "speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx";
-            OfflineRecognizer offlineRecognizer = initOfflineRecognizer(modelName);
+            OfflineRecognizer offlineRecognizer = InitOfflineRecognizer(modelName, modelAccuracy, threadsNum);
+            if (offlineRecognizer == null)
+            {
+                Console.WriteLine("Init models failure!");
+                return;
+            }
             TimeSpan total_duration = new TimeSpan(0L);
-            if (samples == null)
+            List<float[]>? samples = new List<float[]>();
+            if (mediaFilePaths == null || mediaFilePaths.Count() == 0)
             {
-                samples = new List<float[]>();
-                for (int i = 1; i < 2; i++)
+                mediaFilePaths = Directory.GetFiles(Path.Join(applicationBase, modelName, "test_wavs"));
+            }
+            foreach (string mediaFilePath in mediaFilePaths)
+            {
+                if (!File.Exists(mediaFilePath))
                 {
-                    string wavFilePath = string.Format(applicationBase + "./" + modelName + "/example/issue_12.wav", i.ToString());
-                    if (!File.Exists(wavFilePath))
-                    {
-                        break;
-                    }
+                    continue;
+                }
+                if (AudioHelper.IsAudioByHeader(mediaFilePath))
+                {
                     TimeSpan duration = TimeSpan.Zero;
-                    //supports Windows, Mac, and Linux
-                    //float[] sample = AudioHelper.GetFileSamples(wavFilePath: wavFilePath,ref duration);
-                    //supports Windows only
-                    float[]? sample = AudioHelper.GetMediaSample(mediaFilePath: wavFilePath, ref duration);
-                    if(sample != null)
-                    {
-                        samples.Add(sample);
-                        total_duration += duration;
-                    }
+                    float[] sample = AudioHelper.GetMediaSample(mediaFilePath: mediaFilePath, duration: ref duration);
+                    samples.Add(sample);
+                    total_duration += duration;
                 }
             }
+            if (samples.Count == 0)
+            {
+                Console.WriteLine("No media file is read!");
+                return;
+            }
+            Console.WriteLine("Automatic speech recognition in progress!");
             TimeSpan start_time = new TimeSpan(DateTime.Now.Ticks);
-            List<AliParaformerAsr.OfflineStream> streams = new List<AliParaformerAsr.OfflineStream>();
-            foreach (var sample in samples)
+            streamDecodeMethod = string.IsNullOrEmpty(streamDecodeMethod) ? "multi" : streamDecodeMethod;//one ,multi
+            if (streamDecodeMethod == "one")
             {
-                AliParaformerAsr.OfflineStream stream = offlineRecognizer.CreateOfflineStream();
-                stream.AddSamples(sample);
-                streams.Add(stream);
-            }
-            List<AliParaformerAsr.Model.OfflineRecognizerResultEntity> results = offlineRecognizer.GetResults(streams);
-            foreach (AliParaformerAsr.Model.OfflineRecognizerResultEntity result in results)
-            {
-                Console.WriteLine(result.Text);
-                //test_AliCTTransformerPunc(result.Text);
-                for (int i = 0; i < result.Tokens.Count; i++)
+                // Non batch method
+                Console.WriteLine("Recognition results:\r\n");
+                foreach (var sample in samples)
                 {
-                    Console.WriteLine(string.Format("{0}:[{1},{2}]", result.Tokens[i], result.Timestamps[i].First(), result.Timestamps[i].Last()));
+                    OfflineStream stream = offlineRecognizer.CreateOfflineStream();
+                    stream.AddSamples(sample);
+                    AliParaformerAsr.Model.OfflineRecognizerResultEntity result = offlineRecognizer.GetResult(stream);
+                    Console.WriteLine(result.Text);
+                    for (int i = 0; i < result.Tokens.Count; i++)
+                    {
+                        Console.WriteLine(string.Format("{0}:[{1},{2}]", result.Tokens[i], result.Timestamps[i].First(), result.Timestamps[i].Last()));
+                    }
+                    Console.WriteLine("");
                 }
-
+                // Non batch method
+            }
+            if (streamDecodeMethod == "multi")
+            {
+                //2. batch method
+                List<AliParaformerAsr.OfflineStream> streams = new List<AliParaformerAsr.OfflineStream>();
+                foreach (var sample in samples)
+                {
+                    AliParaformerAsr.OfflineStream stream = offlineRecognizer.CreateOfflineStream();
+                    stream.AddSamples(sample);
+                    streams.Add(stream);
+                }
+                List<AliParaformerAsr.Model.OfflineRecognizerResultEntity> results = offlineRecognizer.GetResults(streams);
+                foreach (AliParaformerAsr.Model.OfflineRecognizerResultEntity result in results)
+                {
+                    Console.WriteLine(result.Text);
+                    for (int i = 0; i < result.Tokens.Count; i++)
+                    {
+                        Console.WriteLine(string.Format("{0}:[{1},{2}]", result.Tokens[i], result.Timestamps[i].First(), result.Timestamps[i].Last()));
+                    }
+                    Console.WriteLine("");
+                }
+            }
+            if (_offlineRecognizer != null)
+            {
+                _offlineRecognizer.Dispose();
+                _offlineRecognizer = null;
             }
             TimeSpan end_time = new TimeSpan(DateTime.Now.Ticks);
             double elapsed_milliseconds = end_time.TotalMilliseconds - start_time.TotalMilliseconds;
             double rtf = elapsed_milliseconds / total_duration.TotalMilliseconds;
-            Console.WriteLine("elapsed_milliseconds:{0}", elapsed_milliseconds.ToString());
-            Console.WriteLine("total_duration:{0}", total_duration.TotalMilliseconds.ToString());
+            Console.WriteLine("recognition_elapsed_milliseconds:{0}", elapsed_milliseconds.ToString());
+            Console.WriteLine("total_duration_milliseconds:{0}", total_duration.TotalMilliseconds.ToString());
             Console.WriteLine("rtf:{1}", "0".ToString(), rtf.ToString());
-            Console.WriteLine("Hello, World!");
+            Console.WriteLine("end!");
         }
     }
 }

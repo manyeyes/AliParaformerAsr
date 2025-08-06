@@ -72,17 +72,20 @@ namespace AliParaformerAsr
         private List<int[]>? GetHotwords(string[] tokens,string hotwordFilePath)
         {
             List<int[]>? hotwords = new List<int[]>();
-            string[] sentences= File.ReadAllLines(hotwordFilePath);
-            foreach(string sentence in sentences)
+            if (File.Exists(hotwordFilePath))
             {
-                string[] wordList = new string[] { sentence };//TODO:分词
-                foreach (string word in wordList)
+                string[] sentences = File.ReadAllLines(hotwordFilePath);
+                foreach (string sentence in sentences)
                 {
-                    List<int> ids = word.ToCharArray().Select(x => Array.IndexOf(_tokens, x.ToString())).Where(x => x != -1).ToList();
-                    hotwords.Add(ids.ToArray());
-                }                
+                    string[] wordList = new string[] { sentence };//TODO:分词
+                    foreach (string word in wordList)
+                    {
+                        List<int> ids = word.ToCharArray().Select(x => Array.IndexOf(_tokens, x.ToString())).Where(x => x != -1).ToList();
+                        hotwords.Add(ids.ToArray());
+                    }
+                }
+                hotwords.Add(new int[] { _offlineModel.Sos_eos_id });
             }
-            hotwords.Add(new int[] { _offlineModel.Sos_eos_id });
             return hotwords;
         }
 

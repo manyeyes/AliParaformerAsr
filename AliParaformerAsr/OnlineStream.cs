@@ -26,13 +26,13 @@ namespace AliParaformerAsr
         private List<float> _cifAlpha = new List<float>();
         private int _startIdx = 0;
         private static object obj = new object();
-        private float[] _cacheFeats = null;
-        private float[] _cacheInput = null;
-        private float[] _cachelfrSplice = null;
+        private float[] _cacheFeats = new float[0];
+        private float[] _cacheInput = new float[0];
+        private float[] _cachelfrSplice = new float[0];
         private int _frame_sample_length;
         private int _frame_shift_sample_length;
-        private int _lfr_m = 7;
-        private float[] _cacheSamples = null;
+        private int _repeatNum = (5 - 2) / 2 - 1;
+        private float[] _cacheSamples = new float[0];
         public OnlineStream(OnlineModel onlineModel)
         {
             _onlineInputEntity = new OnlineInputEntity();
@@ -42,21 +42,24 @@ namespace AliParaformerAsr
             _fsmnDims = onlineModel.ConfEntity.encoder_conf.output_size;
             _fsmnLorder = onlineModel.ConfEntity.decoder_conf.kernel_size - 1;
             _fsmnLayer = onlineModel.ConfEntity.decoder_conf.num_blocks;
-
-            _wavFrontend = new OnlineWavFrontend(onlineModel.MvnFilePath, frontendConfEntity);
-            _hyp = new Int64[] { _blank_id, _blank_id };
-            _states = InitEncoderStates();
-            _cifHidden = InitHidden();
-            _cifAlpha = InitAlpha();
-            _cacheFeats = InitCacheFeats();
-            _cacheSamples = new float[160 * onlineModel.ChunkLength];
             _chunkLength = onlineModel.ChunkLength;
             _shiftLength = onlineModel.ShiftLength;
             _featureDim = onlineModel.FeatureDim;
             _sampleRate = onlineModel.SampleRate;
+
+            _wavFrontend = new OnlineWavFrontend(onlineModel.MvnFilePath, frontendConfEntity);
+            _hyp = new Int64[] { _blank_id, _blank_id };
             _tokens = new List<Int64> { _blank_id, _blank_id };
+            _states = InitEncoderStates();
+            _cifHidden = InitHidden();
+            _cifAlpha = InitAlpha();
+            _cacheFeats = InitCacheFeats();
+            _cacheInput = new float[0];
+            _cachelfrSplice = new float[0];
+            _cacheSamples = new float[160 * onlineModel.ChunkLength];
             _frame_sample_length = 25 * 16000 / 1000;
             _frame_shift_sample_length = 10 * 16000 / 1000;
+            _repeatNum = 1;
         }
 
         public OnlineInputEntity OnlineInputEntity { get => _onlineInputEntity; set => _onlineInputEntity = value; }
@@ -69,7 +72,7 @@ namespace AliParaformerAsr
 
         private int ComputeFrameNum(int samplesLength)
         {
-            int frameNum = (samplesLength - _frame_sample_length) / _frame_shift_sample_length + 1;
+            int frameNum = (int)Math.Ceiling((double)(samplesLength - _frame_sample_length) / _frame_shift_sample_length);
             if (frameNum < 1 || samplesLength < _frame_sample_length)
             {
                 frameNum = 0;
@@ -116,37 +119,37 @@ namespace AliParaformerAsr
                     oLen = OnlineInputEntity.SpeechLength;
                 }
                 float[] inputs = new float[samples.Length];
-                if (_cacheInput != null)
-                {
-                    inputs = new float[_cacheInput.Length + samples.Length];
-                    Array.Copy(_cacheInput, 0, inputs, 0, _cacheInput.Length);
-                    Array.Copy(samples, 0, inputs, _cacheInput.Length, samples.Length);
-                }
-                else
-                {
-                    Array.Copy(samples, 0, inputs, 0, samples.Length);
-                }
+                //if (_cacheInput.Length > 0)
+                //{
+                //    inputs = new float[_cacheInput.Length + samples.Length];
+                //    Array.Copy(_cacheInput, 0, inputs, 0, _cacheInput.Length);
+                //    Array.Copy(samples, 0, inputs, _cacheInput.Length, samples.Length);
+                //}
+                //else
+                //{
+                //    Array.Copy(samples, 0, inputs, 0, samples.Length);
+                //}
+                Array.Copy(samples, 0, inputs, 0, samples.Length);
                 int frameNum = ComputeFrameNum(inputs.Length);
                 int waveformLength = inputs.Length;
                 float[] waveform = new float[waveformLength];
                 Array.Copy(inputs, 0, waveform, 0, waveform.Length);
                 waveform = waveform.Select((float x) => x * 32768f).ToArray();
                 float[] features = _wavFrontend.GetFbank(waveform);
-                if (_cacheInput == null)
+                if (_cacheInput.Length == 0)
                 {
-                    int repeatNum = (_lfr_m - 1) / 2 - 1;
                     int featureDim = _featureDim;
                     float[] firstFbank = new float[featureDim];
                     Array.Copy(features, 0, firstFbank, 0, firstFbank.Length);
-                    float[] features_temp = new float[featureDim * repeatNum + features.Length];
-                    for (int i = 0; i < repeatNum; i++)
+                    float[] features_temp = new float[featureDim * _repeatNum + features.Length];
+                    for (int i = 0; i < _repeatNum; i++)
                     {
                         Array.Copy(firstFbank, 0, features_temp, i * featureDim, featureDim);
                     }
-                    Array.Copy(features, 0, features_temp, featureDim * repeatNum, features.Length);
+                    Array.Copy(features, 0, features_temp, featureDim * _repeatNum, features.Length);
                     features = features_temp;
                 }
-                // compute cacheInput
+                //compute cacheInput
                 int cacheInputLength = inputs.Length - frameNum * _frame_shift_sample_length;
                 _cacheInput = new float[cacheInputLength];
                 Array.Copy(inputs, inputs.Length - cacheInputLength, _cacheInput, 0, cacheInputLength);
@@ -171,11 +174,10 @@ namespace AliParaformerAsr
                 float[]? decodeChunk = null;
                 if (chunkLength * featureDim <= _onlineInputEntity.SpeechLength)
                 {
-
                     float[] padChunk = new float[chunkLength * featureDim];
                     float[]? features = _onlineInputEntity.Speech;
                     Array.Copy(features, 0, padChunk, 0, padChunk.Length);
-                    if (_cachelfrSplice != null)
+                    if (_cachelfrSplice.Length > 0)
                     {
                         float[] padChunk_temp = new float[chunkLength * featureDim + _cachelfrSplice.Length];
                         Array.Copy(_cachelfrSplice, 0, padChunk_temp, 0, _cachelfrSplice.Length);
@@ -184,20 +186,20 @@ namespace AliParaformerAsr
                     }
                     else
                     {
-                        float[] firstFbank = new float[80];
+                        float[] firstFbank = new float[featureDim];
                         Array.Copy(padChunk, 0, firstFbank, 0, firstFbank.Length);
                         float[] padChunk_temp = new float[chunkLength * featureDim + firstFbank.Length];
                         Array.Copy(firstFbank, 0, padChunk_temp, 0, firstFbank.Length);
                         Array.Copy(padChunk, 0, padChunk_temp, firstFbank.Length, padChunk.Length);
                         padChunk = padChunk_temp;
                     }
-                    //_cachelfrSplice
-                    _cachelfrSplice = new float[featureDim];
+                    // _cachelfrSplice
+                    _cachelfrSplice = new float[featureDim * _repeatNum];
                     Array.Copy(padChunk, padChunk.Length - _cachelfrSplice.Length, _cachelfrSplice, 0, _cachelfrSplice.Length);
-                    //缓存
+                    // lfr and cmvn
                     padChunk = _wavFrontend.LfrCmvn(padChunk);
                     padChunk = padChunk.Select(x => (float)(x * Math.Pow(512, 0.5))).ToArray();
-                    //position encoding
+                    // position encoding
                     int timesteps = padChunk.Length / 560;
                     padChunk = _wavFrontend.SinusoidalPositionEncoder(padChunk, timesteps, 560, _startIdx);
                     decodeChunk = new float[_cacheFeats.Length + padChunk.Length];

@@ -1,7 +1,5 @@
 ﻿using NAudio.Wave;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Text;
 
 /// <summary>
 /// audio processing
@@ -181,6 +179,128 @@ namespace AliParaformerAsr.Examples.Utils
             }
             duration = durations.Aggregate(TimeSpan.Zero, (currentTotal, nextDuration) => currentTotal + nextDuration);
             return wavdatas;
+        }
+        /// <summary>
+        /// 通过文件头特征判断是否为音频文件
+        /// </summary>
+        public static bool IsAudioByHeader(string filePath)
+        {
+            if (!File.Exists(filePath))
+                return false;
+
+            // 读取文件头前16字节（足够判断常见音频类型）
+            byte[] header = new byte[16];
+            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            {
+                int bytesRead = stream.Read(header, 0, header.Length);
+                if (bytesRead < header.Length)
+                    return false; // 文件过小，无法判断
+            }
+
+            // 检查是否为常见音频文件的文件头
+            return IsMp3Header(header) ||
+                   IsWavHeader(header) ||
+                   IsOggHeader(header) ||
+                   IsAviHeader(header) ||
+                   IsMp4Header(header) ||
+                   IsFlacHeader(header);
+        }
+
+        // 判断是否为MP3文件头（ID3v2或帧头）
+        private static bool IsMp3Header(byte[] header)
+        {
+            // ID3v2标记：前3字节为 'I','D','3'
+            if (header[0] == 0x49 && header[1] == 0x44 && header[2] == 0x33)
+                return true;
+
+            // MP3帧头特征（简化判断）
+            // 帧头前11位为11111111111，第12位为0或1
+            if (header.Length >= 4)
+            {
+                byte b1 = header[0];
+                byte b2 = header[1];
+                bool isFrameHeader = (b1 == 0xFF) && ((b2 & 0xE0) == 0xE0); // 0xE0 = 11100000
+                return isFrameHeader;
+            }
+            return false;
+        }
+
+        // 判断是否为WAV文件头（RIFF + WAVE）
+        private static bool IsWavHeader(byte[] header)
+        {
+            // WAV文件头前8字节：'R','I','F','F', 长度, 'W','A','V','E'
+            if (header.Length >= 12)
+            {
+                bool isRiff = header[0] == 0x52 && header[1] == 0x49 &&
+                              header[2] == 0x46 && header[3] == 0x46; // "RIFF"
+                bool isWave = header[8] == 0x57 && header[9] == 0x41 &&
+                              header[10] == 0x56 && header[11] == 0x45; // "WAVE"
+                return isRiff && isWave;
+            }
+            return false;
+        }
+
+        // 判断是否为OGG文件头（OggS）
+        private static bool IsOggHeader(byte[] header)
+        {
+            // OGG前4字节：'O','g','g','S'
+            return header[0] == 0x4F && header[1] == 0x67 &&
+                   header[2] == 0x67 && header[3] == 0x53;
+        }
+
+        // 判断是否为FLAC文件头（fLaC）
+        private static bool IsFlacHeader(byte[] header)
+        {
+            // FLAC前4字节：'f','L','a','C'
+            return header[0] == 0x66 && header[1] == 0x4C &&
+                   header[2] == 0x61 && header[3] == 0x43;
+        }
+        /// <summary>
+        /// 判断是否为MP4文件头
+        /// MP4文件通常以"ftyp"作为文件标识
+        /// </summary>
+        public static bool IsMp4Header(byte[] header)
+        {
+            // 1. 处理null和长度不足的情况
+            if (header == null || header.Length < 8) // 至少需要8字节（4字节大小 + 4字节"ftyp"）
+                return false;
+
+            // 2. 检查"ftyp"原子标识（第4-7字节，因为前4字节是原子大小）
+            // 注意：标准"ftyp"原子通常位于文件开头，即前8字节为 [大小][ftyp]
+            bool isFtypAtom = (header[4] == 0x66 && header[5] == 0x74 &&
+                               header[6] == 0x79 && header[7] == 0x70);
+
+            // 3. 兼容部分以"ftyp"直接开头的非标准文件（前4字节即为"ftyp"）
+            bool isFtypAtStart = (header[0] == 0x66 && header[1] == 0x74 &&
+                                  header[2] == 0x79 && header[3] == 0x70);
+
+            return isFtypAtom || isFtypAtStart;
+        }
+
+        /// <summary>
+        /// 判断是否为AVI文件头
+        /// AVI文件以"RIFF"开头，且后续包含"AVI "标识
+        /// </summary>
+        public static bool IsAviHeader(byte[] header)
+        {
+            // AVI文件头特征：
+            // 1. 前4字节为 "RIFF"（0x52494646）
+            // 2. 第8-11字节为 "AVI "（0x41564920，注意末尾有空格）
+            if (header.Length >= 12)
+            {
+                bool isRiff = header[0] == 0x52 &&  // 'R'
+                              header[1] == 0x49 &&  // 'I'
+                              header[2] == 0x46 &&  // 'F'
+                              header[3] == 0x46;    // 'F'
+
+                bool isAvi = header[8] == 0x41 &&   // 'A'
+                             header[9] == 0x56 &&   // 'V'
+                             header[10] == 0x49 &&  // 'I'
+                             header[11] == 0x20;    // ' '（空格）
+
+                return isRiff && isAvi;
+            }
+            return false;
         }
     }
 }
