@@ -12,6 +12,7 @@ namespace AliParaformerAsr
         private InferenceSession _encoderSession;
         private InferenceSession _decoderSession;
 
+        private int _chunkSize = 5;
         private int _lfr = 10;
         private int _chunkLength;
         private int _shiftLength;
@@ -26,8 +27,8 @@ namespace AliParaformerAsr
             _decoderSession = initModel(decoderFilePath, threadsNum);
             _confEntity = LoadConf(configFilePath);
             _mvnFilePath = mvnFilePath;
+            _chunkLength = _lfr * _chunkSize + 10;
             _shiftLength = _chunkLength;
-            _chunkLength = _lfr * 6;
         }
 
         public InferenceSession EncoderSession { get => _encoderSession; set => _encoderSession = value; }
@@ -106,16 +107,16 @@ namespace AliParaformerAsr
             foreach (List<float> item in alphas)
             {
                 float[] cifAlphasItem = item.ToArray();
-                float[] chunk_size_5 = new float[5];
-                if (cifAlphasItem.Length > 5)
+                float[] chunk_size_5 = new float[_chunkSize];
+                if (cifAlphasItem.Length > chunk_size_5.Length)
                 {
-                    Array.Copy(chunk_size_5, 0, cifAlphasItem, 0, 5);
+                    Array.Copy(chunk_size_5, 0, cifAlphasItem, 0, chunk_size_5.Length);
                 }
                 else
                 {
                     Array.Copy(chunk_size_5, 0, cifAlphasItem, 0, cifAlphasItem.Length);
                 }
-                int decodeLfr = 5 + _lfr;
+                int decodeLfr = chunk_size_5.Length + _lfr;
                 if (cifAlphasItem.Length > decodeLfr)
                 {
                     float[] chunk_size_15 = new float[cifAlphasItem.Length - decodeLfr];
@@ -126,43 +127,44 @@ namespace AliParaformerAsr
             return newAlphas;
         }
 
-        public float[] StackCifAlphas(List<float[]> cifAlphas)
+        public float[] StackCifAlphas(List<float[]> cifAlphaList)
         {
-            int batchSize = cifAlphas.Count;
-            float[] cifAlpha = new float[cifAlphas[0].Length * batchSize];
+            int batchSize = cifAlphaList.Count;
+            float[] cifAlphas = new float[cifAlphaList[0].Length * batchSize];
             for (int b = 0; b < batchSize; b++)
             {
-                Array.Copy(cifAlphas[b], 0, cifAlpha, b * cifAlphas[0].Length, cifAlphas[b].Length);
+                Array.Copy(cifAlphaList[b], 0, cifAlphas, b * cifAlphaList[0].Length, cifAlphaList[b].Length);
             }
-            return cifAlpha;
+            return cifAlphas;
         }
 
-        public List<float[]> UnStackCifAlphas(float[] cifAlpha, int batchSize)
+        public List<float[]> UnStackCifAlphas(float[] cifAlphas, int batchSize)
         {
-            List<float[]> cifAlphas = new List<float[]>();
+            List<float[]> cifAlphaList = new List<float[]>();
             for (int b = 0; b < batchSize; b++)
             {
-                float[] cifAlphasItem = new float[cifAlpha.Length / batchSize];
-                Array.Copy(cifAlpha, b * cifAlphasItem.Length, cifAlphasItem, 0, cifAlphasItem.Length);
+                float[] cifAlphasItem = new float[cifAlphas.Length / batchSize];
+                Array.Copy(cifAlphas, b * cifAlphasItem.Length, cifAlphasItem, 0, cifAlphasItem.Length);
                 //////////
-                float[] chunk_size_5 = new float[5];
-                if (cifAlphasItem.Length > 5)
+                float[] chunk_size_5 = new float[_chunkSize];
+                if (cifAlphasItem.Length > _chunkSize)
                 {
-                    Array.Copy(chunk_size_5, 0, cifAlphasItem, 0, 5);
+                    Array.Copy(chunk_size_5, 0, cifAlphasItem, 0, chunk_size_5.Length);
                 }
                 else
                 {
                     Array.Copy(chunk_size_5, 0, cifAlphasItem, 0, cifAlphasItem.Length);
                 }
-                if (cifAlphasItem.Length > 15)
+                int decodeLfr = chunk_size_5.Length + _lfr;
+                if (cifAlphasItem.Length > decodeLfr)
                 {
-                    float[] chunk_size_15 = new float[cifAlphasItem.Length - 15];
-                    Array.Copy(chunk_size_15, 0, cifAlphasItem, 15, chunk_size_15.Length);
+                    float[] chunk_size_15 = new float[cifAlphasItem.Length - decodeLfr];
+                    Array.Copy(chunk_size_15, 0, cifAlphasItem, decodeLfr, chunk_size_15.Length);
                 }
                 //////////
-                cifAlphas.Add(cifAlphasItem);
+                cifAlphaList.Add(cifAlphasItem);
             }
-            return cifAlphas;
+            return cifAlphaList;
         }
 
         public List<float[]> stack_states(List<List<float[]>> statesList)
