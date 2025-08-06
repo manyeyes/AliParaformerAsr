@@ -171,7 +171,7 @@ namespace AliParaformerAsr.Examples.Utils
                             _frames = new float[chunkSize];
                         }
                         _samples.Read(_frames, 0, dataCount);
-                        TimeSpan curDuration = TimeSpan.FromMilliseconds(dataCount / 2 * 1000 / 16000);
+                        TimeSpan curDuration = TimeSpan.FromMilliseconds(dataCount / OLDfmt.Channels * 1000 / 16000);
                         durations.Add(curDuration);
                         wavdatas.Add(_frames);
                     }
