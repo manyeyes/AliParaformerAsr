@@ -82,7 +82,7 @@ namespace AliParaformerAsr.Examples
                 {
                     TimeSpan duration = TimeSpan.Zero;
                     samples = AudioHelper.GetMediaChunkSamples(mediaFilePath, ref duration);
-                    for (int j = 0; j < 30; j++)
+                    for (int j = 0; j < 6; j++)
                     {
                         samples.Add(new float[400]);
                     }
