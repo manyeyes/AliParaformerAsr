@@ -12,7 +12,7 @@ internal static partial class Program
     [STAThread]
     private static void Main()
     {
-        string defaultOfflineModelName = "aliparaformerasr-large-zh-en-timestamp-onnx-offline2";
+        string defaultOfflineModelName = "aliparaformerasr-large-zh-en-timestamp-onnx-offline";
         OfflineRecognizer(streamDecodeMethod: "one", modelName: defaultOfflineModelName);
         string defaultOnlineModelName = "aliparaformerasr-large-zh-en-onnx-online";
         OnlineRecognizer(streamDecodeMethod: "one", modelName: defaultOnlineModelName);

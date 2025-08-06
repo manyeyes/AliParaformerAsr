@@ -58,7 +58,8 @@ namespace AliParaformerAsr
             int languageId = 0;
             if (_lidDict.ContainsKey(languageValue))
             {
-                languageId = _lidDict.GetValueOrDefault(languageValue);
+                //languageId = _lidDict.GetValueOrDefault(languageValue);
+                _lidDict.TryGetValue(languageValue,out languageId);
             }
             string textnormValue = "withitn";
             if (!_use_itn)
@@ -68,7 +69,8 @@ namespace AliParaformerAsr
             int textnormId = 15;
             if (_textnormDict.ContainsKey(textnormValue))
             {
-                textnormId = _textnormDict.GetValueOrDefault(textnormValue);
+                //textnormId = _textnormDict.GetValueOrDefault(textnormValue);
+                _textnormDict.TryGetValue(textnormValue, out languageId);
             }
             var inputMeta = _modelSession.InputMetadata;
             if (!inputMeta.ContainsKey("language") && !inputMeta.ContainsKey("textnorm"))

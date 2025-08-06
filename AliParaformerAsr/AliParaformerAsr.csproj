@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-			<TargetFrameworks>netcoreapp3.1;net6.0;net7.0;net8.0;net9.0;net8.0-android;net8.0-ios;net8.0-maccatalyst</TargetFrameworks>
+			<TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp3.1;net6.0;net7.0;net8.0;net9.0;net8.0-android;net8.0-ios;net8.0-maccatalyst</TargetFrameworks>
 			<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net8.0-windows10.0.19041.0</TargetFrameworks>
 			<LangVersion>10</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -17,10 +17,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ManySpeech.SpeechFeatures" Version="1.1.4" />
+    <PackageReference Include="ManySpeech.SpeechFeatures" Version="1.1.6" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.7" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.22.1" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
-  </ItemGroup>
+			<!-- System.Text.Json：仅为不原生支持的框架添加引用 -->
+			<!-- 1. .NET Framework 全版本（均不原生支持） -->
+			<PackageReference Include="Newtonsoft.Json" Version="13.0.3" Condition="'$(TargetFramework)' == 'net461' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48'" />
+			<!-- 2. .NET Standard 全版本（均不原生支持） -->
+			<PackageReference Include="System.Text.Json" Version="6.0.0" Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'" />
+	</ItemGroup>
 
 </Project>

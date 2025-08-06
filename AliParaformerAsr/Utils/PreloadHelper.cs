@@ -1,10 +1,15 @@
 ﻿// See https://github.com/manyeyes for more information
 // Copyright (c)  2024 by manyeyes
-using System.IO;
 using System.Reflection;
-using System.Text.Json;
-using YamlDotNet.Core.Tokens;
 using YamlDotNet.Serialization;
+// 根据框架条件导入命名空间
+#if NETCOREAPP3_1_OR_GREATER || NET6_0_OR_GREATER || NETSTANDARD2_0_OR_GREATER || WINDOWS || __ANDROID__ || __IOS__
+// 原生支持System.Text.Json的框架：优先使用
+using JsonSerializer = System.Text.Json.JsonSerializer;
+#else
+// 不支持的框架：回退到Newtonsoft.Json
+using JsonSerializer = Newtonsoft.Json.JsonConvert;
+#endif
 
 namespace AliParaformerAsr.Utils
 {
@@ -79,7 +84,7 @@ namespace AliParaformerAsr.Utils
                              throw new FileNotFoundException($"Embedded resource '{tokensFilePath}' not found.");
                 using (var reader = new StreamReader(stream))
                 {
-                    tokens = reader.ReadToEnd().Split("\n");//Environment.NewLine
+                    tokens = reader.ReadToEnd().Split('\n');//Environment.NewLine
                 }
             }
             else
