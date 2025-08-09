@@ -277,20 +277,20 @@ namespace AliParaformerAsr
                 }
             }
 #else
-// 低版本框架（如.NET Standard 2.0）：使用兼容的Zip重载
-for (int i = 0; i < new_char_list.Count && i < timestamp_list.Count; i++)
-{
-    bool charX = new_char_list[i];
-    float[] timestamp = timestamp_list[i];
+            // 低版本框架（如.NET Standard 2.0）：使用兼容的Zip重载
+            for (int i = 0; i < new_char_list.Count && i < timestamp_list.Count; i++)
+            {
+                bool charX = new_char_list[i];
+                float[] timestamp = timestamp_list[i];
     
-    if (charX)
-    {
-        timestamps.Add(new int[] { 
-            (int)(timestamp[0] * 1000), 
-            (int)(timestamp[1] * 1000) 
-        });
-    }
-}
+                if (charX)
+                {
+                    timestamps.Add(new int[] { 
+                        (int)(timestamp[0] * 1000), 
+                        (int)(timestamp[1] * 1000) 
+                    });
+                }
+            }
 #endif
             return timestamps;
         }
