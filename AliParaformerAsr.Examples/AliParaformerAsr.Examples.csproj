@@ -1,18 +1,27 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+		<PropertyGroup>
+				<OutputType>Exe</OutputType>
+				<TargetFramework>net9.0</TargetFramework>
+				<ImplicitUsings>enable</ImplicitUsings>
+				<LangVersion>10</LangVersion>
+				<Nullable>enable</Nullable>
+				<PublishAot>true</PublishAot>
+				<ApplicationManifest>app.manifest</ApplicationManifest>
+				<Version>1.1.1</Version>
+		</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="NAudio" Version="2.2.1" />
-  </ItemGroup>
+		<ItemGroup>
+				<!-- 引用 TrimmerRoots.xml -->
+				<TrimmerRoots Include="Config\TrimmerRoots.xml" />
+		</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\AliParaformerAsr\AliParaformerAsr.csproj" />
-  </ItemGroup>
+		<ItemGroup>
+				<PackageReference Include="NAudio" Version="2.2.1" />
+		</ItemGroup>
+
+		<ItemGroup>
+		  <ProjectReference Include="..\AliParaformerAsr\AliParaformerAsr.csproj" />
+		</ItemGroup>
 
 </Project>

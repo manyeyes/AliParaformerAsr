@@ -5,7 +5,7 @@ namespace AliParaformerAsr.Examples
     internal static partial class Program
     {
         private static AliParaformerAsr.OnlineRecognizer? _onlineRecognizer;
-        public static OnlineRecognizer? initOnlineRecognizer(string modelName, string modelAccuracy = "int8", int threadsNum = 2)
+        public static OnlineRecognizer? initOnlineRecognizer(string modelName, string modelBasePath, string modelAccuracy = "int8", int threadsNum = 2)
         {
             if (_onlineRecognizer == null)
             {
@@ -13,14 +13,76 @@ namespace AliParaformerAsr.Examples
                 {
                     return null;
                 }
+                string encoderFilePath = modelBasePath + "./" + modelName + "/encoder.int8.onnx";
+                string decoderFilePath = modelBasePath + "./" + modelName + "/decoder.int8.onnx";
+                string configFilePath = modelBasePath + "./" + modelName + "/asr.yaml";
+                string mvnFilePath = modelBasePath + "./" + modelName + "/am.mvn";
+                string tokensFilePath = modelBasePath + "./" + modelName + "/tokens.txt";
                 try
                 {
+                    string folderPath = Path.Join(modelBasePath, modelName);
+                    // 1. Check if the folder exists
+                    if (!Directory.Exists(folderPath))
+                    {
+                        Console.WriteLine($"Error: folder does not exist - {folderPath}");
+                        return null;
+                    }
+                    // 2. Obtain the file names and destination paths of all files
+                    // (calculate the paths in advance to avoid duplicate concatenation)
+                    var fileInfos = Directory.GetFiles(folderPath)
+                        .Select(filePath => new
+                        {
+                            FileName = Path.GetFileName(filePath),
+                            // Recommend using Path. Combine to handle paths (automatically adapt system separators)
+                            TargetPath = Path.Combine(modelBasePath, modelName, Path.GetFileName(filePath))
+                            // If it is necessary to strictly maintain the original splicing method, it can be replaced with:
+                            // TargetPath = $"{modelBasePath}/./{modelName}/{Path.GetFileName(filePath)}"
+                        })
+                        .ToList();
+
+                    // Process encoder path (priority: containing modelAccuracy>last one that matches prefix)
+                    var encoderCandidates = fileInfos
+                        .Where(f => f.FileName.StartsWith("model") || f.FileName.StartsWith("encoder"))
+                        .ToList();
+                    if (encoderCandidates.Any())
+                    {
+                        // Prioritize selecting files that contain the specified model accuracy
+                        var preferredEncoder = encoderCandidates
+                            .LastOrDefault(f => f.FileName.Contains($".{modelAccuracy}."));
+                        encoderFilePath = preferredEncoder?.TargetPath ?? encoderCandidates.Last().TargetPath;
+                    }
+
+                    // Process decoder path
+                    var decoderCandidates = fileInfos
+                        .Where(f => f.FileName.StartsWith("decoder"))
+                        .ToList();
+                    if (decoderCandidates.Any())
+                    {
+                        var preferredDecoder = decoderCandidates
+                            .LastOrDefault(f => f.FileName.Contains($".{modelAccuracy}."));
+                        decoderFilePath = preferredDecoder?.TargetPath ?? decoderCandidates.Last().TargetPath;
+                    }
+
+                    // Process config paths (take the last one that matches the prefix)
+                    configFilePath = fileInfos
+                        .LastOrDefault(f => f.FileName.StartsWith("asr") && (f.FileName.EndsWith(".json")))
+                        ?.TargetPath ?? "";
+
+                    // Process mvn paths (take the last one that matches the prefix)
+                    mvnFilePath = fileInfos
+                        .LastOrDefault(f => f.FileName.StartsWith("am") && f.FileName.EndsWith(".mvn"))
+                        ?.TargetPath ?? "";
+
+                    // Process token paths (take the last one that matches the prefix)
+                    tokensFilePath = fileInfos
+                        .LastOrDefault(f => f.FileName.StartsWith("tokens"))
+                        ?.TargetPath ?? "";
+
+                    if (string.IsNullOrEmpty(encoderFilePath) || string.IsNullOrEmpty(tokensFilePath))
+                    {
+                        return null;
+                    }
                     TimeSpan start_time = new TimeSpan(DateTime.Now.Ticks);
-                    string encoderFilePath = applicationBase + "./" + modelName + "/encoder.int8.onnx";
-                    string decoderFilePath = applicationBase + "./" + modelName + "/decoder.int8.onnx";
-                    string configFilePath = applicationBase + "./" + modelName + "/asr.yaml";
-                    string mvnFilePath = applicationBase + "./" + modelName + "/am.mvn";
-                    string tokensFilePath = applicationBase + "./" + modelName + "/tokens.txt";
                     _onlineRecognizer = new OnlineRecognizer(encoderFilePath, decoderFilePath, configFilePath, mvnFilePath, tokensFilePath, threadsNum: threadsNum);
                     TimeSpan end_time = new TimeSpan(DateTime.Now.Ticks);
                     double elapsed_milliseconds_init = end_time.TotalMilliseconds - start_time.TotalMilliseconds;
@@ -28,23 +90,27 @@ namespace AliParaformerAsr.Examples
                 }
                 catch (UnauthorizedAccessException)
                 {
-                    Console.WriteLine("错误：没有访问该文件夹的权限");
+                    Console.WriteLine($"Error: No permission to access this folder");
                 }
                 catch (PathTooLongException)
                 {
-                    Console.WriteLine("错误：文件路径过长");
+                    Console.WriteLine($"Error: File path too long");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"发生错误：{ex.Message}");
+                    Console.WriteLine($"Error occurred: {ex.Message}");
                 }
             }
             return _onlineRecognizer;
         }
 
-        public static void OnlineRecognizer(string streamDecodeMethod = "one", string modelName = "speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online-onnx", string modelAccuracy = "int8", int threadsNum = 2, string[]? mediaFilePaths = null)
+        public static void OnlineRecognizer(string streamDecodeMethod = "one", string modelName = "speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online-onnx", string modelAccuracy = "int8", int threadsNum = 2, string[]? mediaFilePaths = null, string? modelBasePath = null)
         {
-            OnlineRecognizer? onlineRecognizer = initOnlineRecognizer(modelName);
+            if (string.IsNullOrEmpty(modelBasePath))
+            {
+                modelBasePath = applicationBase;
+            }
+            OnlineRecognizer? onlineRecognizer = initOnlineRecognizer(modelName, modelBasePath, modelAccuracy, threadsNum);
             if (onlineRecognizer == null)
             {
                 Console.WriteLine("Init models failure!");
@@ -62,7 +128,7 @@ namespace AliParaformerAsr.Examples
             List<float[]>? samples = new List<float[]>();
             if (mediaFilePaths == null || mediaFilePaths.Count() == 0)
             {
-                mediaFilePaths = Directory.GetFiles(Path.Join(applicationBase, modelName, "test_wavs"));
+                mediaFilePaths = Directory.GetFiles(Path.Join(modelBasePath, modelName, "test_wavs"));
             }
             foreach (string mediaFilePath in mediaFilePaths)
             {
@@ -70,7 +136,7 @@ namespace AliParaformerAsr.Examples
                 {
                     continue;
                 }
-                if (batchSize <= n-startIndex)
+                if (batchSize <= n - startIndex)
                 {
                     break;
                 }
@@ -81,13 +147,16 @@ namespace AliParaformerAsr.Examples
                 if (AudioHelper.IsAudioByHeader(mediaFilePath))
                 {
                     TimeSpan duration = TimeSpan.Zero;
-                    samples = AudioHelper.GetMediaChunkSamples(mediaFilePath, ref duration);
-                    for (int j = 0; j < 6; j++)
+                    samples = AudioHelper.GetFileChunkSamples(mediaFilePath, ref duration);
+                    if (samples.Count > 0)
                     {
-                        samples.Add(new float[400]);
+                        for (int j = 0; j < 6; j++)
+                        {
+                            samples.Add(new float[400]);
+                        }
+                        samplesList.Add(samples);
+                        total_duration += duration;
                     }
-                    samplesList.Add(samples);
-                    total_duration += duration;
                 }
                 n++;
             }

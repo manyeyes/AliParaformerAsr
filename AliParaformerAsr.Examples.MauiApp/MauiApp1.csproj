@@ -53,11 +53,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <PackageReference Include="ManySpeech.AliParaformerAsr" Version="1.1.1" />
 	  <PackageReference Include="NAudio" Version="2.2.1" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <ProjectReference Include="..\AliParaformerAsr\AliParaformerAsr.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

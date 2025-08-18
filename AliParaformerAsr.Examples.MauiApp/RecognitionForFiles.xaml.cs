@@ -1,6 +1,7 @@
 ﻿using MauiApp1.Utils;
 using NAudio.Wave;
 using System.Security.Principal;
+using System.Text;
 
 namespace MauiApp1;
 
@@ -13,7 +14,7 @@ public partial class RecognitionForFiles : ContentPage
     private Dictionary<string,string> _modelFiles = new Dictionary<string, string>() {
         { "model.int8.onnx","d2164f971d7c936d2bf3cbe9d5f43d1e"},
         {"am.mvn","dc1dbdeeb8961f012161cfce31eaacaf" },
-        {"asr.yaml","56ea6051f22a1b3f3e7506a963123a74" },
+        {"asr.json","56ea6051f22a1b3f3e7506a963123a74" },
         {"tokens.txt","56b7ae79411b22f167a1f185cae94aa7" },
         {"0.wav","af1295e53df7298458f808bc0cd946e2" }
     };
@@ -297,11 +298,13 @@ public partial class RecognitionForFiles : ContentPage
         await taskFactory.StartNew(async () =>
         {
             var fileResult = await PickAndShow(options);
-            string fullpath = fileResult.FullPath;
-            List<string> fullpaths = new List<string>();
-            fullpaths.Add(fullpath);
-            RecognizerFilesByAliParaformerAsrOffline(fullpaths);
-
+            if (fileResult != null)
+            {
+                string fullpath = fileResult.FullPath;
+                List<string> fullpaths = new List<string>();
+                fullpaths.Add(fullpath);
+                RecognizerFilesByAliParaformerAsrOffline(fullpaths);
+            }
         });
     }
 
@@ -337,7 +340,7 @@ public partial class RecognitionForFiles : ContentPage
             {
                 string allModels = "AllModels";
                 string modelFilePath = SysConf.ApplicationBase + "/" + allModels + "/" + modelName + "/model.int8.onnx";
-                string configFilePath = SysConf.ApplicationBase + "/" + allModels + "/" + modelName + "/asr.yaml";
+                string configFilePath = SysConf.ApplicationBase + "/" + allModels + "/" + modelName + "/asr.json";
                 string mvnFilePath = SysConf.ApplicationBase + "/" + allModels + "/" + modelName + "/am.mvn";
                 string tokensFilePath = SysConf.ApplicationBase + "/" + allModels + "/" + modelName + "/tokens.txt";
                 _offlineRecognizer = new AliParaformerAsr.OfflineRecognizer(modelFilePath, configFilePath, mvnFilePath, tokensFilePath,threadsNum:5);
@@ -397,17 +400,13 @@ public partial class RecognitionForFiles : ContentPage
                                  List<AliParaformerAsr.Model.OfflineRecognizerResultEntity> results = offlineRecognizer.GetResults(streams);
                                  foreach (AliParaformerAsr.Model.OfflineRecognizerResultEntity result in results)
                                  {
-                                     if (!string.IsNullOrEmpty(result.Text))
-                                     {
-                                         Console.WriteLine(result.Text);
-                                         AsrResults.Text = string.Format("result:{0}\n", result.Text);
-                                     }
-                                     for (int i = 0; i < result.Tokens.Count; i++)
-                                     {
-                                         Console.WriteLine(string.Format("{0}:[{1},{2}]", result.Tokens[i], result.Timestamps[i].First(), result.Timestamps[i].Last()));
-                                         AsrResults.Text += string.Format("{0}:[{1},{2}]\n", result.Tokens[i], result.Timestamps[i].First(), result.Timestamps[i].Last());
-                                     }
-
+                                     StringBuilder r = new StringBuilder();
+                                     r.Append("{");
+                                     r.Append($"\"text\": \"{result?.Text}\",");
+                                     r.Append($"\"tokens\":[{string.Join(",", result?.Tokens.Select(x => $"\"{x}\"").ToArray())}],");
+                                     r.Append($"\"timestamps\":[{string.Join(",", result?.Timestamps.Select(x => $"[{x.First()},{x.Last()}]").ToArray())}]");
+                                     r.Append("}");
+                                     AsrResults.Text = r.ToString();
                                  }                                 
                                  TimeSpan end_time = new TimeSpan(DateTime.Now.Ticks);
                                  double elapsed_milliseconds = end_time.TotalMilliseconds - start_time.TotalMilliseconds;

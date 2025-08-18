@@ -9,28 +9,26 @@ namespace AliParaformerAsr.Examples.Utils
 {
     public class AudioHelper
     {
-        /// <summary>
-        /// get file samples
-        /// supports Windows, Mac, and Linux
-        /// </summary>
-        /// <param name="wavFilePath"></param>
-        /// <param name="duration"></param>
-        /// <returns></returns>
-        public static float[]? GetFileSamples(string wavFilePath, ref TimeSpan duration)
+        public static float[] GetFileSample(string wavFilePath, ref TimeSpan duration)
         {
-            float[]? wavdata = null;
             if (!File.Exists(wavFilePath))
             {
-                Trace.Assert(File.Exists(wavFilePath), "file does not exist:" + wavFilePath);
-                return wavdata;
+                return new float[1];
             }
-            AudioFileReader _audioFileReader = new AudioFileReader(wavFilePath);
-            byte[] datas = new byte[_audioFileReader.Length];
-            _audioFileReader.Read(datas, 0, datas.Length);
-            duration = _audioFileReader.TotalTime;
-            wavdata = new float[datas.Length / sizeof(float)];
-            Buffer.BlockCopy(datas, 0, wavdata, 0, datas.Length);
-            return wavdata;
+            AudioFileReader audioFileReader = new AudioFileReader(wavFilePath);
+            int sampleRate = audioFileReader.WaveFormat.SampleRate;
+            int sourceChannels = audioFileReader.WaveFormat.Channels;
+            byte[] datas = new byte[audioFileReader.Length];
+            //audioFileReader.Read(datas, 0, datas.Length);
+            audioFileReader.ReadExactly(datas, 0, datas.Length);
+            duration = audioFileReader.TotalTime;
+            float[] wavsdata = new float[datas.Length / sizeof(float)];
+            Buffer.BlockCopy(datas, 0, wavsdata, 0, datas.Length);
+            if (sampleRate != 16000)
+            {
+                wavsdata = Resample(wavsdata, sampleRate, 16000, sourceChannels: sourceChannels);
+            }
+            return wavsdata;
         }
 
         /// <summary>
@@ -53,7 +51,7 @@ namespace AliParaformerAsr.Examples.Utils
                 using (MediaFoundationReader _mediaFileReader = new MediaFoundationReader(mediaFilePath))
                 {
                     WaveFormat OLDfmt = _mediaFileReader.WaveFormat;
-                    int channels = 1;
+                    int channels = 1;// OLDfmt.Channels;
                     int bitsPerSample = 32;
                     int newSampleRate = 16000;
                     var targetFormat = new WaveFormat(newSampleRate, bitsPerSample, channels);
@@ -74,18 +72,11 @@ namespace AliParaformerAsr.Examples.Utils
             }
             catch (Exception ex)
             {
-                //
+                throw new Exception("Get media sample failed", ex);
             }
             return wavdata;
         }
-        /// <summary>
-        /// get file chunk samples
-        /// supports Windows, Mac, and Linux
-        /// </summary>
-        /// <param name="wavFilePath"></param>
-        /// <param name="duration"></param>
-        /// <param name="chunkSize"></param>
-        /// <returns></returns>
+
         public static List<float[]> GetFileChunkSamples(string wavFilePath, ref TimeSpan duration, int chunkSize = 160 * 6 * 10)
         {
             List<float[]> wavdatas = new List<float[]>();
@@ -95,13 +86,24 @@ namespace AliParaformerAsr.Examples.Utils
                 wavdatas.Add(new float[1]);
                 return wavdatas;
             }
-            AudioFileReader _audioFileReader = new AudioFileReader(wavFilePath);
-            byte[] datas = new byte[_audioFileReader.Length];
-            _audioFileReader.Read(datas);
-            duration = _audioFileReader.TotalTime;
+            AudioFileReader audioFileReader = new AudioFileReader(wavFilePath);
+            int sampleRate = audioFileReader.WaveFormat.SampleRate;
+            int sourceChannels = audioFileReader.WaveFormat.Channels;
+            byte[] datas = new byte[audioFileReader.Length];
+            //audioFileReader.Read(datas);
+            audioFileReader.ReadExactly(datas);
+            duration = audioFileReader.TotalTime;
             float[] wavsdata = new float[datas.Length / sizeof(float)];
-            int wavsLength = wavsdata.Length;
             Buffer.BlockCopy(datas, 0, wavsdata, 0, datas.Length);
+            //if (sampleRate != 16000)
+            //{
+            //    wavsdata = Resample(wavsdata, sampleRate, 16000);
+            //}
+            if (sampleRate != 16000)
+            {
+                wavsdata = Resample(wavsdata, sampleRate, 16000, sourceChannels: sourceChannels);
+            }
+            int wavsLength = wavsdata.Length;
             int chunkNum = (int)Math.Ceiling((double)wavsLength / chunkSize);
             for (int i = 0; i < chunkNum; i++)
             {
@@ -123,14 +125,7 @@ namespace AliParaformerAsr.Examples.Utils
             }
             return wavdatas;
         }
-        /// <summary>
-        /// get media chunk sample
-        /// supports Windows only
-        /// </summary>
-        /// <param name="mediaFilePath"></param>
-        /// <param name="duration"></param>
-        /// <param name="chunkSize"></param>
-        /// <returns></returns>
+
         public static List<float[]> GetMediaChunkSamples(string mediaFilePath, ref TimeSpan duration, int chunkSize = 160 * 6 * 10)
         {
             List<float[]> wavdatas = new List<float[]>();
@@ -147,7 +142,7 @@ namespace AliParaformerAsr.Examples.Utils
                 var ieeeFloatWaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(16000, 1); // mono
                 using (var _mediaFileReaderResampler = new MediaFoundationResampler(_mediaFileReader, ieeeFloatWaveFormat))
                 {
-                    int bytesPerFrame = _mediaFileReader.WaveFormat.BitsPerSample / 8 * _mediaFileReader.WaveFormat.Channels;
+                    int bytesPerFrame = _mediaFileReader.WaveFormat.BitsPerSample / 8 * _mediaFileReader.WaveFormat.Channels; // 100 millsec 1 frames
                     int bufferedFrames = (int)Math.Ceiling(_mediaFileReader.Length / bytesPerFrame * ((float)ieeeFloatWaveFormat.SampleRate / (float)OLDfmt.SampleRate / OLDfmt.Channels));
                     ISampleProvider? _samples = _mediaFileReaderResampler.ToSampleProvider();
                     int chunkNum = (int)Math.Floor((double)bufferedFrames / chunkSize);
@@ -171,7 +166,9 @@ namespace AliParaformerAsr.Examples.Utils
                             _frames = new float[chunkSize];
                         }
                         _samples.Read(_frames, 0, dataCount);
-                        TimeSpan curDuration = TimeSpan.FromMilliseconds(dataCount / OLDfmt.Channels * 1000 / 16000);
+
+                        //_mediaFileReader.Read(datas, offset, dataCount);
+                        TimeSpan curDuration = TimeSpan.FromMilliseconds(dataCount / 2 * 1000 / 16000);
                         durations.Add(curDuration);
                         wavdatas.Add(_frames);
                     }
@@ -180,6 +177,108 @@ namespace AliParaformerAsr.Examples.Utils
             duration = durations.Aggregate(TimeSpan.Zero, (currentTotal, nextDuration) => currentTotal + nextDuration);
             return wavdatas;
         }
+        /// <summary>
+        /// Resamples audio sample rate
+        /// </summary>
+        /// <param name="sourceData">Source audio data (PCM format, range [-1, 1])</param>
+        /// <param name="sourceSampleRate">Source sample rate (e.g., 44100)</param>
+        /// <param name="targetSampleRate">Target sample rate (e.g., 16000)</param>
+        /// <returns>Resampled audio data</returns>
+        public static float[] Resample(float[] sourceData, int sourceSampleRate, int targetSampleRate)
+        {
+            if (sourceSampleRate <= 0 || targetSampleRate <= 0)
+            {
+                throw new ArgumentException("Sample rates must be positive numbers");
+            }
+            if (sourceData == null || sourceData.Length == 0)
+            {
+                return Array.Empty<float>();
+            }
+            // Calculate sample rate ratio
+            double ratio = (double)sourceSampleRate / targetSampleRate;
+            // Calculate target data length
+            int targetLength = (int)Math.Round(sourceData.Length / ratio);
+            float[] targetData = new float[targetLength];
+            // Calculate new sample points using linear interpolation
+            for (int i = 0; i < targetLength; i++)
+            {
+                // Calculate corresponding position in source data (may be a decimal)
+                double sourcePosition = i * ratio;
+                // Integer part (source data index)
+                int index = (int)sourcePosition;
+                // Decimal part (interpolation weight)
+                double fraction = sourcePosition - index;
+                // Handle boundary cases (avoid out-of-bounds)
+                if (index >= sourceData.Length - 1)
+                {
+                    targetData[i] = sourceData[sourceData.Length - 1];
+                    continue;
+                }
+                // Linear interpolation: f(x) = (1 - fraction) * x0 + fraction * x1
+                targetData[i] = (float)((1 - fraction) * sourceData[index] + fraction * sourceData[index + 1]);
+            }
+            return targetData;
+        }
+
+        public static float[] Resample(float[] sourceData, int sourceSampleRate, int targetSampleRate, int sourceChannels = 1)
+        {
+            // 参数验证
+            if (sourceSampleRate <= 0 || targetSampleRate <= 0)
+            {
+                throw new ArgumentException("采样率必须为正数", nameof(sourceSampleRate));
+            }
+            if (sourceChannels != 1 && sourceChannels != 2)
+            {
+                throw new ArgumentException("仅支持单通道（1）或双通道（2）输入", nameof(sourceChannels));
+            }
+            if (sourceData == null || sourceData.Length == 0)
+            {
+                return Array.Empty<float>();
+            }
+
+            // 步骤1：将双通道转为单通道（如果需要）
+            float[] monoData = sourceData;
+            if (sourceChannels == 2)
+            {
+                // 计算单通道数据长度（双通道数据长度应为偶数，若为奇数则忽略最后一个字节）
+                int monoLength = sourceData.Length / 2;
+                monoData = new float[monoLength];
+
+                // 合并左右声道（取平均值）
+                for (int i = 0; i < monoLength; i++)
+                {
+                    float leftChannel = sourceData[i * 2];       // 左声道数据
+                    float rightChannel = sourceData[i * 2 + 1];  // 右声道数据
+                    monoData[i] = (leftChannel + rightChannel) * 0.5f;  // 平均合并
+                }
+            }
+
+            // 步骤2：执行重采样（复用原有逻辑，基于单通道数据处理）
+            double ratio = (double)sourceSampleRate / targetSampleRate;
+            int targetLength = (int)Math.Round(monoData.Length / ratio);
+            float[] targetData = new float[targetLength];
+
+            for (int i = 0; i < targetLength; i++)
+            {
+                double sourcePosition = i * ratio;
+                int index = (int)sourcePosition;
+                double fraction = sourcePosition - index;
+
+                // 处理边界情况（避免索引越界）
+                if (index >= monoData.Length - 1)
+                {
+                    targetData[i] = monoData[monoData.Length - 1];
+                    continue;
+                }
+
+                // 线性插值计算重采样后的值
+                targetData[i] = (float)((1 - fraction) * monoData[index] + fraction * monoData[index + 1]);
+            }
+
+            return targetData;
+        }
+
+
         /// <summary>
         /// 通过文件头特征判断是否为音频文件
         /// </summary>
@@ -255,6 +354,7 @@ namespace AliParaformerAsr.Examples.Utils
             return header[0] == 0x66 && header[1] == 0x4C &&
                    header[2] == 0x61 && header[3] == 0x43;
         }
+
         /// <summary>
         /// 判断是否为MP4文件头
         /// MP4文件通常以"ftyp"作为文件标识
