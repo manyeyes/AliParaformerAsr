@@ -1,27 +1,95 @@
 ﻿using AliParaformerAsr.Examples.Utils;
+using System.Text;
 
 namespace AliParaformerAsr.Examples
 {
     internal static partial class Program
     {
         private static AliParaformerAsr.OfflineRecognizer? _offlineRecognizer;
-        public static OfflineRecognizer InitOfflineRecognizer(string modelName, string modelAccuracy = "int8", int threadsNum = 2)
+        public static OfflineRecognizer InitOfflineRecognizer(string modelName, string modelBasePath, string modelAccuracy = "int8", int threadsNum = 2)
         {
             if (_offlineRecognizer == null)
             {
-                if (string.IsNullOrEmpty(modelName))
+                if (string.IsNullOrEmpty(modelBasePath) || string.IsNullOrEmpty(modelName))
                 {
                     return null;
                 }
+                string modelFilePath = modelBasePath + "./" + modelName + "/model.int8.onnx";
+                string configFilePath = modelBasePath + "./" + modelName + "/asr.yaml";
+                string mvnFilePath = modelBasePath + "./" + modelName + "/am.mvn";
+                string tokensFilePath = modelBasePath + "./" + modelName + "/tokens.txt";
+                string modelebFilePath = modelBasePath + "./" + modelName + "/model_eb.int8.onnx";
+                string hotwordFilePath = modelBasePath + "./" + modelName + "/hotword.txt";
                 try
                 {
+                    string folderPath = Path.Join(modelBasePath, modelName);
+                    // 1. Check if the folder exists
+                    if (!Directory.Exists(folderPath))
+                    {
+                        Console.WriteLine($"Error: folder does not exist - {folderPath}");
+                        return null;
+                    }
+                    // 2. Obtain the file names and destination paths of all files
+                    // (calculate the paths in advance to avoid duplicate concatenation)
+                    var fileInfos = Directory.GetFiles(folderPath)
+                        .Select(filePath => new
+                        {
+                            FileName = Path.GetFileName(filePath),
+                            // Recommend using Path. Combine to handle paths (automatically adapt system separators)
+                            TargetPath = Path.Combine(modelBasePath, modelName, Path.GetFileName(filePath))
+                            // If it is necessary to strictly maintain the original splicing method, it can be replaced with:
+                            // TargetPath = $"{modelBasePath}/./{modelName}/{Path.GetFileName(filePath)}"
+                        })
+                        .ToList();
+
+                    // Process model path (priority: containing modelAccuracy>last one that matches prefix)
+                    var modelCandidates = fileInfos
+                        .Where(f => f.FileName.StartsWith("model") && !f.FileName.Contains("_eb"))
+                        .ToList();
+                    if (modelCandidates.Any())
+                    {
+                        // Prioritize selecting files that contain the specified model accuracy
+                        var preferredModel = modelCandidates
+                            .LastOrDefault(f => f.FileName.Contains($".{modelAccuracy}."));
+                        modelFilePath = preferredModel?.TargetPath ?? modelCandidates.Last().TargetPath;
+                    }
+
+                    // Process modeleb path
+                    var modelebCandidates = fileInfos
+                        .Where(f => f.FileName.StartsWith("model_eb"))
+                        .ToList();
+                    if (modelebCandidates.Any())
+                    {
+                        var preferredModeleb = modelebCandidates
+                            .LastOrDefault(f => f.FileName.Contains($".{modelAccuracy}."));
+                        modelebFilePath = preferredModeleb?.TargetPath ?? modelebCandidates.Last().TargetPath;
+                    }
+
+                    // Process config paths (take the last one that matches the prefix)
+                    configFilePath = fileInfos
+                        .LastOrDefault(f => f.FileName.StartsWith("asr") && (f.FileName.EndsWith(".json")))
+                        ?.TargetPath ?? "";
+
+                    // Process mvn paths (take the last one that matches the prefix)
+                    mvnFilePath = fileInfos
+                        .LastOrDefault(f => f.FileName.StartsWith("am") && f.FileName.EndsWith(".mvn"))
+                        ?.TargetPath ?? "";
+
+                    // Process token paths (take the last one that matches the prefix)
+                    tokensFilePath = fileInfos
+                        .LastOrDefault(f => f.FileName.StartsWith("tokens") && f.FileName.EndsWith(".txt"))
+                        ?.TargetPath ?? "";
+
+                    // Process hotword paths (take the last one that matches the prefix)
+                    hotwordFilePath = fileInfos
+                        .LastOrDefault(f => f.FileName.StartsWith("hotword") && f.FileName.EndsWith(".txt"))
+                        ?.TargetPath ?? "";
+
+                    if (string.IsNullOrEmpty(modelFilePath) || string.IsNullOrEmpty(tokensFilePath))
+                    {
+                        return null;
+                    }
                     TimeSpan start_time = new TimeSpan(DateTime.Now.Ticks);
-                    string modelFilePath = applicationBase + "./" + modelName + "/model.int8.onnx";
-                    string configFilePath = applicationBase + "./" + modelName + "/asr.yaml";
-                    string mvnFilePath = applicationBase + "./" + modelName + "/am.mvn";
-                    string tokensFilePath = applicationBase + "./" + modelName + "/tokens.txt";
-                    string modelebFilePath = applicationBase + "./" + modelName + "/model_eb.int8.onnx";
-                    string hotwordFilePath = applicationBase + "./" + modelName + "/hotword.txt";
                     _offlineRecognizer = new OfflineRecognizer(modelFilePath: modelFilePath, configFilePath: configFilePath, mvnFilePath: mvnFilePath, tokensFilePath: tokensFilePath, modelebFilePath: modelebFilePath, hotwordFilePath: hotwordFilePath, threadsNum: threadsNum);
                     TimeSpan end_time = new TimeSpan(DateTime.Now.Ticks);
                     double elapsed_milliseconds_init = end_time.TotalMilliseconds - start_time.TotalMilliseconds;
@@ -29,22 +97,26 @@ namespace AliParaformerAsr.Examples
                 }
                 catch (UnauthorizedAccessException)
                 {
-                    Console.WriteLine("错误：没有访问该文件夹的权限");
+                    Console.WriteLine($"Error: No permission to access this folder");
                 }
                 catch (PathTooLongException)
                 {
-                    Console.WriteLine("错误：文件路径过长");
+                    Console.WriteLine($"Error: File path too long");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"发生错误：{ex.Message}");
+                    Console.WriteLine($"Error occurred: {ex}");
                 }
             }
             return _offlineRecognizer;
         }
-        public static void OfflineRecognizer(string streamDecodeMethod = "one", string modelName = "paraformer-seaco-large-zh-timestamp-onnx-offline", string modelAccuracy = "int8", int threadsNum = 2, string[]? mediaFilePaths = null)
+        public static void OfflineRecognizer(string streamDecodeMethod = "one", string modelName = "paraformer-seaco-large-zh-timestamp-onnx-offline", string modelAccuracy = "int8", int threadsNum = 2, string[]? mediaFilePaths = null, string? modelBasePath = null)
         {
-            OfflineRecognizer offlineRecognizer = InitOfflineRecognizer(modelName, modelAccuracy, threadsNum);
+            if (string.IsNullOrEmpty(modelBasePath))
+            {
+                modelBasePath = applicationBase;
+            }
+            OfflineRecognizer offlineRecognizer = InitOfflineRecognizer(modelName, modelBasePath, modelAccuracy, threadsNum);
             if (offlineRecognizer == null)
             {
                 Console.WriteLine("Init models failure!");
@@ -52,9 +124,10 @@ namespace AliParaformerAsr.Examples
             }
             TimeSpan total_duration = new TimeSpan(0L);
             List<float[]>? samples = new List<float[]>();
+            List<string> paths= new List<string>();
             if (mediaFilePaths == null || mediaFilePaths.Count() == 0)
             {
-                mediaFilePaths = Directory.GetFiles(Path.Join(applicationBase, modelName, "test_wavs"));
+                mediaFilePaths = Directory.GetFiles(Path.Join(modelBasePath, modelName, "test_wavs"));
             }
             foreach (string mediaFilePath in mediaFilePaths)
             {
@@ -65,9 +138,13 @@ namespace AliParaformerAsr.Examples
                 if (AudioHelper.IsAudioByHeader(mediaFilePath))
                 {
                     TimeSpan duration = TimeSpan.Zero;
-                    float[] sample = AudioHelper.GetMediaSample(mediaFilePath: mediaFilePath, duration: ref duration);
-                    samples.Add(sample);
-                    total_duration += duration;
+                    float[]? sample = AudioHelper.GetFileSample(wavFilePath: mediaFilePath, duration: ref duration);
+                    if (sample != null)
+                    {
+                        paths.Add(mediaFilePath);
+                        samples.Add(sample);
+                        total_duration += duration;
+                    }
                 }
             }
             if (samples.Count == 0)
@@ -82,39 +159,66 @@ namespace AliParaformerAsr.Examples
             {
                 // Non batch method
                 Console.WriteLine("Recognition results:\r\n");
-                foreach (var sample in samples)
+                try
                 {
-                    OfflineStream stream = offlineRecognizer.CreateOfflineStream();
-                    stream.AddSamples(sample);
-                    AliParaformerAsr.Model.OfflineRecognizerResultEntity result = offlineRecognizer.GetResult(stream);
-                    Console.WriteLine(result.Text);
-                    for (int i = 0; i < result.Tokens.Count; i++)
+                    int n = 0;
+                    foreach (var sample in samples)
                     {
-                        Console.WriteLine(string.Format("{0}:[{1},{2}]", result.Tokens[i], result.Timestamps[i].First(), result.Timestamps[i].Last()));
+                        OfflineStream stream = offlineRecognizer.CreateOfflineStream();
+                        stream.AddSamples(sample);
+                        AliParaformerAsr.Model.OfflineRecognizerResultEntity result = offlineRecognizer.GetResult(stream);
+                        Console.WriteLine($"{paths[n]}");
+                        StringBuilder r = new StringBuilder();
+                        r.Append("{");
+                        r.Append($"\"text\": \"{result.Text}\",");
+                        r.Append($"\"tokens\":[{string.Join(",",result.Tokens.Select(x=>$"\"{x}\"").ToArray())}],");
+                        r.Append($"\"timestamps\":[{string.Join(",", result.Timestamps.Select(x => $"[{x.First()},{x.Last()}]").ToArray())}]");
+                        r.Append("}");
+                        Console.WriteLine($"{r.ToString()}");
+                        Console.WriteLine("");
+                        n++;
                     }
-                    Console.WriteLine("");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.InnerException?.InnerException);
                 }
                 // Non batch method
             }
             if (streamDecodeMethod == "multi")
             {
                 //2. batch method
-                List<AliParaformerAsr.OfflineStream> streams = new List<AliParaformerAsr.OfflineStream>();
-                foreach (var sample in samples)
+                Console.WriteLine("Recognition results:\r\n");
+                try
                 {
-                    AliParaformerAsr.OfflineStream stream = offlineRecognizer.CreateOfflineStream();
-                    stream.AddSamples(sample);
-                    streams.Add(stream);
-                }
-                List<AliParaformerAsr.Model.OfflineRecognizerResultEntity> results = offlineRecognizer.GetResults(streams);
-                foreach (AliParaformerAsr.Model.OfflineRecognizerResultEntity result in results)
-                {
-                    Console.WriteLine(result.Text);
-                    for (int i = 0; i < result.Tokens.Count; i++)
+                    int n = 0;
+                    List<AliParaformerAsr.OfflineStream> streams = new List<AliParaformerAsr.OfflineStream>();
+                    foreach (var sample in samples)
                     {
-                        Console.WriteLine(string.Format("{0}:[{1},{2}]", result.Tokens[i], result.Timestamps[i].First(), result.Timestamps[i].Last()));
+                        AliParaformerAsr.OfflineStream stream = offlineRecognizer.CreateOfflineStream();
+                        stream.AddSamples(sample);
+                        streams.Add(stream);
                     }
-                    Console.WriteLine("");
+                    List<AliParaformerAsr.Model.OfflineRecognizerResultEntity> results = offlineRecognizer.GetResults(streams);
+                    foreach (AliParaformerAsr.Model.OfflineRecognizerResultEntity result in results)
+                    {
+                        Console.WriteLine($"{paths[n]}");
+                        StringBuilder r = new StringBuilder();
+                        r.Append("{");
+                        r.Append($"\"text\": \"{result.Text}\",");
+                        r.Append($"\"tokens\":[{string.Join(",", result.Tokens.Select(x => $"\"{x}\"").ToArray())}],");
+                        r.Append($"\"timestamps\":[{string.Join(",", result.Timestamps.Select(x => $"[{x.First()},{x.Last()}]").ToArray())}]");
+                        r.Append("}");
+                        Console.WriteLine($"{r.ToString()}");
+                        Console.WriteLine("");
+                        n++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.InnerException?.InnerException.Message);
                 }
             }
             if (_offlineRecognizer != null)
