@@ -1,18 +1,35 @@
 ﻿// See https://github.com/manyeyes for more information
 // Copyright (c)  2024 by manyeyes
 using System.Reflection;
-using YamlDotNet.Serialization;
-// 根据框架条件导入命名空间
-#if NETCOREAPP3_1_OR_GREATER || NET6_0_OR_GREATER || NETSTANDARD2_0_OR_GREATER || WINDOWS || __ANDROID__ || __IOS__
-// 原生支持System.Text.Json的框架：优先使用
-using JsonSerializer = System.Text.Json.JsonSerializer;
-#else
-// 不支持的框架：回退到Newtonsoft.Json
-using JsonSerializer = Newtonsoft.Json.JsonConvert;
-#endif
+using System.Text.Json;
+using System.Text.Json.Serialization;
+//using YamlDotNet.Serialization;
+//using YamlDotNet.Serialization.NamingConventions;
 
 namespace AliParaformerAsr.Utils
 {
+    // 源生成器的上下文配置
+    [JsonSourceGenerationOptions(WriteIndented = true)] // 配置序列化选项
+    [JsonSerializable(typeof(Model.ConfEntity))] // 指定需要序列化的类型
+    public partial class AppJsonContext : JsonSerializerContext
+    {
+        // 生成器会自动填充实现
+    }
+    // 源生成器的上下文配置
+    //[YamlStaticContext]
+    //[YamlSerializable(typeof(Model.ConfEntity))] // 指定需要序列化的类型
+    //[YamlSerializable(typeof(Model.FrontendConfEntity))]
+    //[YamlSerializable(typeof(Model.ModelConfEntity))]
+    //[YamlSerializable(typeof(Model.PostEncoderConfEntity))]
+    //[YamlSerializable(typeof(Model.EncoderConfEntity))]
+    //[YamlSerializable(typeof(Model.PostEncoderConfEntity))]
+    //[YamlSerializable(typeof(Model.DecoderConfEntity))]
+    //[YamlSerializable(typeof(Model.PredictorConfEntity))]
+    //public partial class YamlStaticContext : YamlDotNet.Serialization.StaticContext
+    //{
+    //    // 生成器会自动填充实现
+    //}
+
     /// <summary>
     /// PreloadHelper
     /// Copyright (c)  2024 by manyeyes
@@ -22,15 +39,16 @@ namespace AliParaformerAsr.Utils
         public static T? ReadYaml<T>(string yamlFilePath)
         {
             T? info = default(T);
-            if (!string.IsNullOrEmpty(yamlFilePath) && yamlFilePath.IndexOf("/") < 0)
+            ////Deserializer yamlDeserializer = new Deserializer();
+            //IDeserializer yamlDeserializer = new StaticDeserializerBuilder(new YamlStaticContext()).WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
+            if (!string.IsNullOrEmpty(yamlFilePath) && yamlFilePath.IndexOf("/") < 0 && yamlFilePath.IndexOf("\\") < 0)
             {
                 var assembly = Assembly.GetExecutingAssembly();
                 var stream = assembly.GetManifestResourceStream(yamlFilePath) ??
                              throw new FileNotFoundException($"Embedded resource '{yamlFilePath}' not found.");
                 using (var yamlReader = new StreamReader(stream))
                 {
-                    Deserializer yamlDeserializer = new Deserializer();
-                    info = yamlDeserializer.Deserialize<T>(yamlReader);
+                    //info = yamlDeserializer.Deserialize<T>(yamlReader);
                     yamlReader.Close();
                 }
             }
@@ -38,27 +56,23 @@ namespace AliParaformerAsr.Utils
             {
                 using (var yamlReader = File.OpenText(yamlFilePath))
                 {
-                    Deserializer yamlDeserializer = new Deserializer();
-                    info = yamlDeserializer.Deserialize<T>(yamlReader);
+                    //info = yamlDeserializer.Deserialize<T>(yamlReader);
                     yamlReader.Close();
                 }
             }
-#pragma warning disable CS8603 // 可能返回 null 引用。
             return info;
-#pragma warning restore CS8603 // 可能返回 null 引用。
         }
 
         public static T? ReadJson<T>(string jsonFilePath)
         {
             T? info = default(T);
-            if (!string.IsNullOrEmpty(jsonFilePath) && jsonFilePath.IndexOf("/") < 0)
+            if (!string.IsNullOrEmpty(jsonFilePath) && jsonFilePath.IndexOf("/") < 0 && jsonFilePath.IndexOf("\\") < 0)
             {
                 var assembly = Assembly.GetExecutingAssembly();
                 var stream = assembly.GetManifestResourceStream(jsonFilePath) ??
                              throw new FileNotFoundException($"Embedded resource '{jsonFilePath}' not found.");
                 using (var jsonReader = new StreamReader(stream))
                 {
-                    Deserializer jsonDeserializer = new Deserializer();
                     info = JsonSerializer.Deserialize<T>(jsonReader.ReadToEnd());
                     jsonReader.Close();
                 }
@@ -72,12 +86,37 @@ namespace AliParaformerAsr.Utils
                 }
             }
             return info;
+        }        
+
+        public static Model.ConfEntity? ReadJson(string jsonFilePath)
+        {
+            Model.ConfEntity? info = new Model.ConfEntity();
+            if (!string.IsNullOrEmpty(jsonFilePath) && jsonFilePath.IndexOf("/") < 0 && jsonFilePath.IndexOf("\\") < 0)
+            {
+                var assembly = Assembly.GetExecutingAssembly();
+                var stream = assembly.GetManifestResourceStream(jsonFilePath) ??
+                             throw new FileNotFoundException($"Embedded resource '{jsonFilePath}' not found.");
+                using (var jsonReader = new StreamReader(stream))
+                {
+                    info = JsonSerializer.Deserialize(jsonReader.ReadToEnd(), AppJsonContext.Default.ConfEntity);
+                    jsonReader.Close();
+                }
+            }
+            else if (File.Exists(jsonFilePath))
+            {
+                using (var jsonReader = File.OpenText(jsonFilePath))
+                {
+                    info = JsonSerializer.Deserialize(jsonReader.ReadToEnd(), AppJsonContext.Default.ConfEntity);
+                    jsonReader.Close();
+                }
+            }
+            return info;
         }
 
         public static string[] ReadTokens(string tokensFilePath)
         {
             string[] tokens = null;
-            if (!string.IsNullOrEmpty(tokensFilePath) && tokensFilePath.IndexOf("/") < 0)
+            if (!string.IsNullOrEmpty(tokensFilePath) && tokensFilePath.IndexOf("/") < 0 && tokensFilePath.IndexOf("\\") < 0)
             {
                 var assembly = Assembly.GetExecutingAssembly();
                 var stream = assembly.GetManifestResourceStream(tokensFilePath) ??

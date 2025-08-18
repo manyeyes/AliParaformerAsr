@@ -169,7 +169,7 @@ namespace AliParaformerAsr
             }
             catch (Exception ex)
             {
-                //
+                throw new Exception("ModelProj failed", ex);
             }
             return modelOutputEntity;
         }

@@ -1,7 +1,6 @@
 ﻿// See https://github.com/manyeyes for more information
 // Copyright (c)  2023 by manyeyes
 using AliParaformerAsr.Model;
-using Microsoft.Extensions.Logging;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using System.Text.RegularExpressions;
@@ -17,7 +16,6 @@ namespace AliParaformerAsr
         private bool _disposed;
 
         private OnlineModel _onlineModel;
-        private readonly ILogger<OnlineRecognizer> _logger;
         private string[] _tokens;
         private List<float[]> _next_statesList=new List<float[]>();
 
@@ -25,8 +23,6 @@ namespace AliParaformerAsr
         {
             _onlineModel = new OnlineModel(encoderFilePath, decoderFilePath, mvnFilePath, configFilePath, threadsNum);
             _tokens = Utils.PreloadHelper.ReadTokens(tokensFilePath);
-            ILoggerFactory loggerFactory = new LoggerFactory();
-            _logger = new Logger<OnlineRecognizer>(loggerFactory);
         }
         public OnlineStream CreateOnlineStream()
         {
@@ -44,7 +40,7 @@ namespace AliParaformerAsr
 
         public List<OnlineRecognizerResultEntity> GetResults(List<OnlineStream> streams)
         {
-            this._logger.LogInformation("get features begin");
+            //this._logger.LogInformation("get features begin");
             this.Forward(streams);
             List<OnlineRecognizerResultEntity> onlineRecognizerResultEntities = this.DecodeMulti(streams);
 
@@ -121,7 +117,7 @@ namespace AliParaformerAsr
             }
             catch (Exception ex)
             {
-                //
+                throw new Exception("EncoderProj failed", ex.InnerException);
             }
             return encoderOutput;
         }
@@ -337,7 +333,7 @@ namespace AliParaformerAsr
             }
             catch (Exception ex)
             {
-                //
+                throw new Exception("DecoderProj failed", ex);
             }
             return decoderOutputEntity;
         }
@@ -399,7 +395,7 @@ namespace AliParaformerAsr
             }
             catch (Exception ex)
             {
-                //
+                throw new Exception("Online recognition failed", ex);
             }
 
         }

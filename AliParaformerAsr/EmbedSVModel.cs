@@ -2,7 +2,7 @@
 // Copyright (c)  2024 by manyeyes
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
-using System.Reflection;
+//using System.Reflection;
 
 namespace AliParaformerAsr
 {
@@ -30,7 +30,8 @@ namespace AliParaformerAsr
         }
         private static byte[] ReadEmbeddedResourceAsBytes(string resourceName)
         {
-            var assembly = Assembly.GetExecutingAssembly();
+            //var assembly = Assembly.GetExecutingAssembly();
+            var assembly = typeof(EmbedSVModel).Assembly;
 
             var stream = assembly.GetManifestResourceStream(resourceName) ??
                          throw new FileNotFoundException($"Embedded resource '{resourceName}' not found.");
@@ -55,8 +56,8 @@ namespace AliParaformerAsr
                     container.Add(NamedOnnxValue.CreateFromTensor<Int64>(name, tensor));
                 }
             }
-            IReadOnlyCollection<string> outputNames = new List<string>();
-            outputNames.Append("y");
+            //IReadOnlyCollection<string> outputNames = new List<string>();
+            //outputNames.Append("y");
             IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results = null;
             try
             {
@@ -70,7 +71,7 @@ namespace AliParaformerAsr
             }
             catch (Exception ex)
             {
-                //
+                throw new Exception("Embed SV Forward failed", ex.InnerException);
             }
             return y;
         }
