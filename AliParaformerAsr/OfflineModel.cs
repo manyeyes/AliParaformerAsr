@@ -1,7 +1,7 @@
 ﻿// See https://github.com/manyeyes for more information
 // Copyright (c)  2023 by manyeyes
 using Microsoft.ML.OnnxRuntime;
-using System.Reflection;
+//using System.Reflection;
 
 namespace AliParaformerAsr
 {
@@ -35,18 +35,30 @@ namespace AliParaformerAsr
 
         public InferenceSession initModel(string modelFilePath, int threadsNum = 2)
         {
-            if (string.IsNullOrEmpty(modelFilePath))
+            if (string.IsNullOrEmpty(modelFilePath) || !File.Exists(modelFilePath))
             {
                 return null;
             }
             Microsoft.ML.OnnxRuntime.SessionOptions options = new Microsoft.ML.OnnxRuntime.SessionOptions();
+            //options.LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_INFO;
             options.LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_FATAL;
+            options.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL; // 启用所有图优化
             //options.AppendExecutionProvider_DML(0);
             options.AppendExecutionProvider_CPU(0);
             //options.AppendExecutionProvider_CUDA(0);
-            options.InterOpNumThreads = threadsNum;
+            //options.AppendExecutionProvider_MKLDNN();
+            //options.AppendExecutionProvider_ROCm(0);
+            if (threadsNum > 0)
+                options.InterOpNumThreads = threadsNum;
+            else
+                options.InterOpNumThreads = System.Environment.ProcessorCount;
+            // 启用CPU内存计划
+            options.EnableMemoryPattern = true;
+            // 设置其他优化选项            
+            options.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL;
+
             InferenceSession onnxSession = null;
-            if (!string.IsNullOrEmpty(modelFilePath) && modelFilePath.IndexOf("/") < 0)
+            if (!string.IsNullOrEmpty(modelFilePath) && modelFilePath.IndexOf("/") < 0 && modelFilePath.IndexOf("\\") < 0)
             {
                 byte[] model = ReadEmbeddedResourceAsBytes(modelFilePath);
                 onnxSession = new InferenceSession(model, options);
@@ -57,18 +69,23 @@ namespace AliParaformerAsr
             }
             return onnxSession;
         }
+
         private static byte[] ReadEmbeddedResourceAsBytes(string resourceName)
         {
-            var assembly = Assembly.GetExecutingAssembly();
+            //var assembly = Assembly.GetExecutingAssembly();
+            var assembly = typeof(OfflineModel).Assembly;
             var stream = assembly.GetManifestResourceStream(resourceName) ??
                          throw new FileNotFoundException($"Embedded resource '{resourceName}' not found.");
             byte[] bytes = new byte[stream.Length];
             stream.Read(bytes, 0, bytes.Length);
+            // 设置当前流的位置为流的开始 
             stream.Seek(0, SeekOrigin.Begin);
             stream.Close();
             stream.Dispose();
+
             return bytes;
         }
+        
         private List<int[]>? GetHotwords(string hotwordFilePath = "")
         {
             List<int[]>? hotwords = null;

@@ -1,7 +1,6 @@
 ﻿// See https://github.com/manyeyes for more information
 // Copyright (c)  2023 by manyeyes
 using AliParaformerAsr.Model;
-using Microsoft.Extensions.Logging;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using System.Text.RegularExpressions;
 
@@ -16,7 +15,6 @@ namespace AliParaformerAsr
         private bool _disposed;
 
         private OfflineModel _offlineModel;
-        private readonly ILogger _logger;
         private string[] _tokens;
         private ConfEntity _confEntity;
         private string _mvnFilePath;
@@ -49,8 +47,6 @@ namespace AliParaformerAsr
                     _offlineProj = new OfflineProjOfParaformer(_offlineModel);
                     break;
             }
-            ILoggerFactory loggerFactory = new LoggerFactory();
-            _logger = new Logger<OfflineRecognizer>(loggerFactory);
         }
         private ConfEntity? LoadConf(string configFilePath)
         {
@@ -59,7 +55,8 @@ namespace AliParaformerAsr
             {
                 if (configFilePath.ToLower().EndsWith(".json"))
                 {
-                    confJsonEntity = Utils.PreloadHelper.ReadJson<ConfEntity>(configFilePath);
+                    //confJsonEntity = Utils.PreloadHelper.ReadJson<ConfEntity>(configFilePath);
+                    confJsonEntity = Utils.PreloadHelper.ReadJson(configFilePath);
                 }
                 else if (configFilePath.ToLower().EndsWith(".yaml"))
                 {
@@ -104,7 +101,7 @@ namespace AliParaformerAsr
         }
         public List<OfflineRecognizerResultEntity> GetResults(List<OfflineStream> streams)
         {
-            this._logger.LogInformation("get features begin");
+            //this._logger.LogInformation("get features begin");
             this.Forward(streams);
             List<OfflineRecognizerResultEntity> text_results = this.DecodeMulti(streams);
             return text_results;
@@ -187,7 +184,7 @@ namespace AliParaformerAsr
             }
             catch (Exception ex)
             {
-                //
+                throw new Exception("Offline recognition failed", ex);
             }
         }
 

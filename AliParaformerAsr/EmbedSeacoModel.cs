@@ -2,7 +2,7 @@
 // Copyright (c)  2024 by manyeyes
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
-using System.Reflection;
+//using System.Reflection;
 
 namespace AliParaformerAsr
 {
@@ -18,22 +18,58 @@ namespace AliParaformerAsr
 
         public InferenceSession initModel(string modelFilePath, int threadsNum = 2)
         {
-            if (string.IsNullOrEmpty(modelFilePath))
+            if (string.IsNullOrEmpty(modelFilePath) || !File.Exists(modelFilePath))
             {
                 return null;
             }
             Microsoft.ML.OnnxRuntime.SessionOptions options = new Microsoft.ML.OnnxRuntime.SessionOptions();
+            //options.LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_INFO;
             options.LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_FATAL;
             //options.AppendExecutionProvider_DML(0);
             options.AppendExecutionProvider_CPU(0);
             //options.AppendExecutionProvider_CUDA(0);
-            options.InterOpNumThreads = threadsNum;
-            InferenceSession onnxSession = new InferenceSession(modelFilePath, options);
+            //options.AppendExecutionProvider_MKLDNN();
+            //options.AppendExecutionProvider_ROCm(0);
+            if (threadsNum > 0)
+                options.InterOpNumThreads = threadsNum;
+            else
+                options.InterOpNumThreads = System.Environment.ProcessorCount;
+            // 启用CPU内存计划
+            options.EnableMemoryPattern = true;
+            // 设置其他优化选项            
+            options.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL;
+
+            InferenceSession onnxSession = null;
+            if (!string.IsNullOrEmpty(modelFilePath) && modelFilePath.IndexOf("/") < 0 && modelFilePath.IndexOf("\\") < 0)
+            {
+                byte[] model = ReadEmbeddedResourceAsBytes(modelFilePath);
+                onnxSession = new InferenceSession(model, options);
+            }
+            else
+            {
+                onnxSession = new InferenceSession(modelFilePath, options);
+            }
             return onnxSession;
+        }
+
+        private static byte[] ReadEmbeddedResourceAsBytes(string resourceName)
+        {
+            //var assembly = Assembly.GetExecutingAssembly();
+            var assembly = typeof(EmbedSeacoModel).Assembly;
+            var stream = assembly.GetManifestResourceStream(resourceName) ??
+                         throw new FileNotFoundException($"Embedded resource '{resourceName}' not found.");
+            byte[] bytes = new byte[stream.Length];
+            stream.Read(bytes, 0, bytes.Length);
+            // 设置当前流的位置为流的开始 
+            stream.Seek(0, SeekOrigin.Begin);
+            stream.Close();
+            stream.Dispose();
+
+            return bytes;
         }
         public Tensor<float>? Forward(List<int[]>? hotwords)
         {
-            if(hotwords == null || hotwords.Count == 0)
+            if (hotwords == null || hotwords.Count == 0)
             {
                 return null;
             }
@@ -53,8 +89,8 @@ namespace AliParaformerAsr
                     container.Add(NamedOnnxValue.CreateFromTensor<int>(name, tensor));
                 }
             }
-            IReadOnlyCollection<string> outputNames = new List<string>();
-            outputNames.Append("hw_embed");
+            //IReadOnlyCollection<string> outputNames = new List<string>();
+            //outputNames.Append("hw_embed");
             IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results = null;
             try
             {
@@ -67,7 +103,7 @@ namespace AliParaformerAsr
             }
             catch (Exception ex)
             {
-                //
+                throw new Exception("Embed SeACo Forward failed", ex.InnerException);
             }
             return hwEmbed;
         }

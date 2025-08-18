@@ -84,11 +84,11 @@ namespace AliParaformerAsr
                             for (int j = 0; j < _hwEmbed.Dimensions[0]; j++)
                             {
                                 int k = _hwEmbed.Dimensions[2];
-                                Array.Copy(_hwEmbed.ToArray(), n * _hwEmbed.Dimensions[1] * 512 + j * k, eb, j * k, k);
+                                Array.Copy(_hwEmbed.ToArray(), j * _hwEmbed.Dimensions[1] * k + n * k, eb, j * k, k);
                             }
                             ebList.Add(eb);
                         }
-                        float[] biasEmbedTemp = ebList.SelectMany(x => x).ToArray();
+                        float[] biasEmbedTemp = ebList.SelectMany(x => x).ToArray(); // _hwEmbed.ToArray();// 
                         for (int i = 0; i < batchSize; i++)
                         {
                             Array.Copy(biasEmbedTemp, 0, biasEmbed, i * biasEmbedTemp.Length, biasEmbedTemp.Length);
@@ -118,7 +118,7 @@ namespace AliParaformerAsr
             }
             catch (Exception ex)
             {
-                //
+                throw new Exception("ModelProj failed", ex);
             }
             return modelOutputEntity;
         }
