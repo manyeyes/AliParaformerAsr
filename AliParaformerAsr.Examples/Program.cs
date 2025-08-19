@@ -57,7 +57,7 @@ namespace AliParaformerAsr.Examples
                             if (Console.ReadKey().Key == ConsoleKey.Enter)
                                 break;
                         }
-                        args = sb.ToString().Replace("\r\n", " ").Split(" ");
+                        args = sb.ToString().TrimEnd('\r', '\n').Replace("\r\n", " ").Split(" ");
                         args = args.Where(x => !string.IsNullOrEmpty(x)).ToArray();
                     }
 
