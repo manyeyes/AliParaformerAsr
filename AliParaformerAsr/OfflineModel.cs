@@ -11,20 +11,19 @@ namespace AliParaformerAsr
         private string _modelebFilePath;
         private List<int[]>? _hotwords = null;
         private int _blank_id = 0;
-        private int sos_eos_id = 1;
+        private int _sos_eos_id = 1;
         private int _unk_id = 2;
         private int _featureDim = 80;
         private int _sampleRate = 16000;
         private bool _use_itn = false;
 
-        public OfflineModel(string modelFilePath, string modelebFilePath = "", string hotwordFilePath = "", int threadsNum = 2)
+        public OfflineModel(string modelFilePath, string modelebFilePath = "", int threadsNum = 2)
         {
             _modelSession = initModel(modelFilePath, threadsNum);
             _modelebFilePath = modelebFilePath;
-            _hotwords = GetHotwords(hotwordFilePath);
         }
         public int Blank_id { get => _blank_id; set => _blank_id = value; }
-        public int Sos_eos_id { get => sos_eos_id; set => sos_eos_id = value; }
+        public int Sos_eos_id { get => _sos_eos_id; set => _sos_eos_id = value; }
         public int Unk_id { get => _unk_id; set => _unk_id = value; }
         public int FeatureDim { get => _featureDim; set => _featureDim = value; }
         public InferenceSession ModelSession { get => _modelSession; set => _modelSession = value; }
@@ -86,12 +85,6 @@ namespace AliParaformerAsr
             return bytes;
         }
         
-        private List<int[]>? GetHotwords(string hotwordFilePath = "")
-        {
-            List<int[]>? hotwords = null;
-            //TODO: read data from hotwordFilePath
-            return hotwords;
-        }
         protected virtual void Dispose(bool disposing)
         {
             if (disposing)

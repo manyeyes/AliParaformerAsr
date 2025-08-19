@@ -11,6 +11,7 @@ namespace AliParaformerAsr
         private int _blank_id = 0;
         private int _unk_id = 2;
         private Int64[] _hyp;
+        private List<int[]>? _hotwords = new List<int[]>();
         List<Int64> _tokens = new List<Int64>();
         List<int[]> _timestamps = new List<int[]>();
         private static object obj = new object();
@@ -28,6 +29,7 @@ namespace AliParaformerAsr
         public Int64[] Hyp { get => _hyp; set => _hyp = value; }
         public List<Int64> Tokens { get => _tokens; set => _tokens = value; }
         public List<int[]> Timestamps { get => _timestamps; set => _timestamps = value; }
+        public List<int[]>? Hotwords { get => _hotwords; set => _hotwords = value; }
 
         public void AddSamples(float[] samples)
         {
@@ -48,9 +50,21 @@ namespace AliParaformerAsr
                 Array.Copy(features, 0, featuresTemp, OfflineInputEntity.SpeechLength, features.Length);
                 OfflineInputEntity.Speech = featuresTemp;
                 OfflineInputEntity.SpeechLength = featuresTemp.Length;
+                OfflineInputEntity.Hotwords = Hotwords;
             }
         }
-        public void RemoveSamples()
+        public OfflineInputEntity GetDecodeChunk()
+        {
+            lock (obj)
+            {
+                if (OfflineInputEntity.Speech != null && OfflineInputEntity.SpeechLength > 0)
+                {
+                    OfflineInputEntity.Hotwords = Hotwords;
+                }
+                return OfflineInputEntity;
+            }
+        }
+        public void RemoveChunk()
         {
             lock (obj)
             {

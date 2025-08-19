@@ -17,7 +17,7 @@
 		</ItemGroup>
 
 		<ItemGroup>
-				<PackageReference Include="ManySpeech.AliParaformerAsr" Version="1.1.2" />
+				<PackageReference Include="ManySpeech.AliParaformerAsr" Version="1.1.4" />
 				<PackageReference Include="NAudio" Version="2.2.1" />
 		</ItemGroup>
 

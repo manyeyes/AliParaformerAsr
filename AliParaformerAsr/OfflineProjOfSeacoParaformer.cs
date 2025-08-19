@@ -13,6 +13,7 @@ namespace AliParaformerAsr
         private bool _disposed;
 
         private InferenceSession _modelSession;
+        private EmbedSeacoModel _seacohwModel;
         private Tensor<float>? _hwEmbed = null;
         private int _blank_id = 0;
         private int _sos_eos_id = 1;
@@ -27,9 +28,9 @@ namespace AliParaformerAsr
             var inputMeta = _modelSession.InputMetadata;
             if (inputMeta.ContainsKey("bias_embed"))
             {
-                EmbedSeacoModel seacohwModel = new EmbedSeacoModel(offlineModel.ModelebFilePath);
+                _seacohwModel = new EmbedSeacoModel(offlineModel.ModelebFilePath);
                 List<int[]>? hotwords = offlineModel.Hotwords;
-                _hwEmbed = seacohwModel.Forward(hotwords);
+                _hwEmbed = _seacohwModel.Forward(hotwords);
             }
             _blank_id = offlineModel.Blank_id;
             _sos_eos_id = offlineModel.Sos_eos_id;
@@ -47,6 +48,16 @@ namespace AliParaformerAsr
         public ModelOutputEntity ModelProj(List<OfflineInputEntity> modelInputs)
         {
             int batchSize = modelInputs.Count;
+            Tensor<float>? hwEmbed = null;
+            List<int[]>? hotwords = modelInputs.SelectMany(x => x.Hotwords).ToList();
+            if (hotwords != null && hotwords?.Count > 0)
+            {
+                hwEmbed = _seacohwModel.Forward(hotwords);
+            }
+            else
+            {
+                hwEmbed = _hwEmbed;
+            }
             float[] padSequence = PadHelper.PadSequence(modelInputs);
             var inputMeta = _modelSession.InputMetadata;
             var container = new List<NamedOnnxValue>();
@@ -73,22 +84,22 @@ namespace AliParaformerAsr
                 {
                     int[] dim = new int[] { batchSize, 0, 512 };
                     float[] biasEmbed = new float[0];
-                    if (_hwEmbed != null)
+                    if (hwEmbed != null)
                     {
-                        long _hwEmbedLength = _hwEmbed.Length;
+                        long _hwEmbedLength = hwEmbed.Length;
                         biasEmbed = new float[_hwEmbedLength * batchSize];
                         List<float[]> ebList = new List<float[]>();
-                        for (int n = 0; n < _hwEmbed.Dimensions[1]; n++)
+                        for (int n = 0; n < hwEmbed.Dimensions[1]; n++)
                         {
                             float[] eb = new float[10 * 512];
-                            for (int j = 0; j < _hwEmbed.Dimensions[0]; j++)
+                            for (int j = 0; j < hwEmbed.Dimensions[0]; j++)
                             {
-                                int k = _hwEmbed.Dimensions[2];
-                                Array.Copy(_hwEmbed.ToArray(), j * _hwEmbed.Dimensions[1] * k + n * k, eb, j * k, k);
+                                int k = hwEmbed.Dimensions[2];
+                                Array.Copy(hwEmbed.ToArray(), j * hwEmbed.Dimensions[1] * k + n * k, eb, j * k, k);
                             }
                             ebList.Add(eb);
                         }
-                        float[] biasEmbedTemp = ebList.SelectMany(x => x).ToArray(); // _hwEmbed.ToArray();// 
+                        float[] biasEmbedTemp = ebList.SelectMany(x => x).ToArray(); // hwEmbed.ToArray();// 
                         for (int i = 0; i < batchSize; i++)
                         {
                             Array.Copy(biasEmbedTemp, 0, biasEmbed, i * biasEmbedTemp.Length, biasEmbedTemp.Length);
@@ -131,6 +142,14 @@ namespace AliParaformerAsr
                     if (_modelSession != null)
                     {
                         _modelSession.Dispose();
+                    }
+                    if (_seacohwModel != null)
+                    {
+                        _seacohwModel.Dispose();
+                    }
+                    if (_hwEmbed != null)
+                    {
+                        _hwEmbed = null;
                     }
                 }
                 _disposed = true;
