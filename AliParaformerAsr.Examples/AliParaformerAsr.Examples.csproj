@@ -6,9 +6,9 @@
 				<ImplicitUsings>enable</ImplicitUsings>
 				<LangVersion>10</LangVersion>
 				<Nullable>enable</Nullable>
-				<PublishAot>true</PublishAot>
+				<PublishAot>false</PublishAot>
 				<ApplicationManifest>app.manifest</ApplicationManifest>
-				<Version>1.1.1</Version>
+				<Version>1.1.2</Version>
 		</PropertyGroup>
 
 		<ItemGroup>
@@ -17,11 +17,8 @@
 		</ItemGroup>
 
 		<ItemGroup>
+				<PackageReference Include="ManySpeech.AliParaformerAsr" Version="1.1.2" />
 				<PackageReference Include="NAudio" Version="2.2.1" />
-		</ItemGroup>
-
-		<ItemGroup>
-		  <ProjectReference Include="..\AliParaformerAsr\AliParaformerAsr.csproj" />
 		</ItemGroup>
 
 </Project>

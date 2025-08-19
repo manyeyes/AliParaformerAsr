@@ -82,7 +82,7 @@
                 x:Name="AsrResults"
                 HorizontalOptions="FillAndExpand"
                 BackgroundColor="White"
-                TextColor="Red" />
+                TextColor="Black" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
