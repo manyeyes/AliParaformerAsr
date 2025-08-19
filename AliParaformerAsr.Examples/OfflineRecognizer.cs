@@ -124,7 +124,7 @@ namespace AliParaformerAsr.Examples
             }
             TimeSpan total_duration = new TimeSpan(0L);
             List<float[]>? samples = new List<float[]>();
-            List<string> paths= new List<string>();
+            List<string> paths = new List<string>();
             if (mediaFilePaths == null || mediaFilePaths.Count() == 0)
             {
                 //mediaFilePaths = Directory.GetFiles(Path.Combine(modelBasePath, modelName, "test_wavs"));
@@ -178,13 +178,15 @@ namespace AliParaformerAsr.Examples
                     foreach (var sample in samples)
                     {
                         OfflineStream stream = offlineRecognizer.CreateOfflineStream();
+                        // Modify the logic here to dynamically modify hot words
+                        //stream.Hotwords = Utils.TextHelper.GetHotwords(Path.Combine(modelBasePath, modelName, "tokens.txt"), new string[] {"魔搭" });
                         stream.AddSamples(sample);
                         AliParaformerAsr.Model.OfflineRecognizerResultEntity result = offlineRecognizer.GetResult(stream);
                         Console.WriteLine($"{paths[n]}");
                         StringBuilder r = new StringBuilder();
                         r.Append("{");
                         r.Append($"\"text\": \"{result.Text}\",");
-                        r.Append($"\"tokens\":[{string.Join(",",result.Tokens.Select(x=>$"\"{x}\"").ToArray())}],");
+                        r.Append($"\"tokens\":[{string.Join(",", result.Tokens.Select(x => $"\"{x}\"").ToArray())}],");
                         r.Append($"\"timestamps\":[{string.Join(",", result.Timestamps.Select(x => $"[{x.First()},{x.Last()}]").ToArray())}]");
                         r.Append("}");
                         Console.WriteLine($"{r.ToString()}");
