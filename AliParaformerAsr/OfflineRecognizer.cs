@@ -22,7 +22,7 @@ namespace AliParaformerAsr
 
         public OfflineRecognizer(string modelFilePath, string configFilePath, string mvnFilePath, string tokensFilePath, string modelebFilePath = "", string hotwordFilePath = "", int batchSize = 1, int threadsNum = 1)
         {
-            _offlineModel = new OfflineModel(modelFilePath: modelFilePath, modelebFilePath: modelebFilePath, hotwordFilePath: hotwordFilePath, threadsNum);
+            _offlineModel = new OfflineModel(modelFilePath: modelFilePath, modelebFilePath: modelebFilePath, threadsNum);
             _confEntity = LoadConf(configFilePath);
             _offlineModel.Use_itn = _confEntity.use_itn;
             _mvnFilePath = mvnFilePath;
@@ -76,7 +76,7 @@ namespace AliParaformerAsr
                     string[] wordList = new string[] { sentence };//TODO:分词
                     foreach (string word in wordList)
                     {
-                        List<int> ids = word.ToCharArray().Select(x => Array.IndexOf(_tokens, x.ToString())).Where(x => x != -1).ToList();
+                        List<int> ids = word.ToCharArray().Select(x => Array.IndexOf(tokens, x.ToString())).Where(x => x != -1).ToList();
                         hotwords.Add(ids.ToArray());
                     }
                 }
@@ -116,7 +116,8 @@ namespace AliParaformerAsr
             List<OfflineInputEntity> modelInputs = new List<OfflineInputEntity>();
             foreach (OfflineStream stream in streams)
             {
-                modelInputs.Add(stream.OfflineInputEntity);
+                var decodeChunk = stream.GetDecodeChunk();
+                modelInputs.Add(decodeChunk);
             }
             try
             {
@@ -177,7 +178,7 @@ namespace AliParaformerAsr
                     {
                         stream.Tokens = token_nums[streamIndex].ToList();
                         stream.Timestamps.AddRange(timestamps_list[streamIndex]);
-                        stream.RemoveSamples();
+                        stream.RemoveChunk();
                         streamIndex++;
                     }
                 }
