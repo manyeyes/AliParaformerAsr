@@ -1,6 +1,4 @@
 ﻿using MauiApp1.Utils;
-using NAudio.Wave;
-using System.Security.Principal;
 using System.Text;
 
 namespace MauiApp1;
@@ -11,7 +9,7 @@ public partial class RecognitionForFiles : ContentPage
     private string[] _downloadHostParams = new string[] { "https://www.modelscope.cn/models", "master" };
     //private string _subFolderName = "speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx";
     private string _subFolderName = "sensevoice-small-onnx";
-    private Dictionary<string,string> _modelFiles = new Dictionary<string, string>() {
+    private Dictionary<string, string> _modelFiles = new Dictionary<string, string>() {
         { "model.int8.onnx","d2164f971d7c936d2bf3cbe9d5f43d1e"},
         {"am.mvn","dc1dbdeeb8961f012161cfce31eaacaf" },
         {"asr.json","56ea6051f22a1b3f3e7506a963123a74" },
@@ -86,7 +84,7 @@ public partial class RecognitionForFiles : ContentPage
                 {
                     break;
                 }
-                var downloadUrl = string.Format("{0}/manyeyes/{1}/resolve/{2}/{3}", _downloadHostParams[0], _subFolderName, _downloadHostParams[1], fileName);                
+                var downloadUrl = string.Format("{0}/manyeyes/{1}/resolve/{2}/{3}", _downloadHostParams[0], _subFolderName, _downloadHostParams[1], fileName);
                 downloadHelper.DownloadCreate(downloadUrl, fileName, _rootFolderName, _subFolderName);
                 downloadHelper.DownloadStart();
                 indexs.Add(fileName);
@@ -131,7 +129,7 @@ public partial class RecognitionForFiles : ContentPage
 
     async void DownloadCheck()
     {
-        
+
         DownloadHelper downloadHelper = new DownloadHelper(this.DownloadDisplay);
         bool state = downloadHelper.GetDownloadState(_modelFiles, _rootFolderName, _subFolderName);
         ModelStatusLabel.Dispatcher.Dispatch(
@@ -343,7 +341,7 @@ public partial class RecognitionForFiles : ContentPage
                 string configFilePath = SysConf.ApplicationBase + "/" + allModels + "/" + modelName + "/asr.json";
                 string mvnFilePath = SysConf.ApplicationBase + "/" + allModels + "/" + modelName + "/am.mvn";
                 string tokensFilePath = SysConf.ApplicationBase + "/" + allModels + "/" + modelName + "/tokens.txt";
-                _offlineRecognizer = new AliParaformerAsr.OfflineRecognizer(modelFilePath, configFilePath, mvnFilePath, tokensFilePath,threadsNum:5);
+                _offlineRecognizer = new AliParaformerAsr.OfflineRecognizer(modelFilePath, configFilePath, mvnFilePath, tokensFilePath, threadsNum: 5);
             }
             catch
             {
@@ -361,29 +359,41 @@ public partial class RecognitionForFiles : ContentPage
                          new Action(
                              delegate
                              {
-                                 AsrResults.Text = "正在识别，请稍后……";
+                                 AsrResults.Text = "Speech recognition in progress, please wait……";
                              }
                              ));
         List<float[]>? samples = new List<float[]>();
+        List<string> paths = new List<string>();
         TimeSpan total_duration = new TimeSpan(0L);
         foreach (string fullpath in fullpaths)
         {
-            string wavFilePath = string.Format(fullpath);
-            if (!File.Exists(wavFilePath))
+            string mediaFilePath = string.Format(fullpath);
+            if (!File.Exists(mediaFilePath))
             {
                 continue;
             }
-            AudioFileReader _audioFileReader = new AudioFileReader(wavFilePath);
-            byte[] datas = new byte[_audioFileReader.Length];
-            _audioFileReader.Read(datas, 0, datas.Length);
-            TimeSpan duration = _audioFileReader.TotalTime;
-            float[] sample = new float[datas.Length / sizeof(float)];
-            Buffer.BlockCopy(datas, 0, sample, 0, datas.Length);
-            if (sample != null)
+            if (AudioHelper.IsAudioByHeader(mediaFilePath))
             {
-                samples.Add(sample);
-                total_duration += duration;
+                TimeSpan duration = TimeSpan.Zero;
+                float[]? sample = AudioHelper.GetFileSample(wavFilePath: mediaFilePath, duration: ref duration);
+                if (sample != null)
+                {
+                    paths.Add(mediaFilePath);
+                    samples.Add(sample);
+                    total_duration += duration;
+                }
             }
+        }
+        if (samples.Count == 0)
+        {
+            AsrResults.Dispatcher.Dispatch(
+                         new Action(
+                             delegate
+                             {
+                                 AsrResults.Text = "No media file is read!";
+                             }
+                             ));
+            return;
         }
         AsrResults.Dispatcher.Dispatch(
                          new Action(
@@ -398,16 +408,19 @@ public partial class RecognitionForFiles : ContentPage
                                      streams.Add(stream);
                                  }
                                  List<AliParaformerAsr.Model.OfflineRecognizerResultEntity> results = offlineRecognizer.GetResults(streams);
+                                 int n = 0;
                                  foreach (AliParaformerAsr.Model.OfflineRecognizerResultEntity result in results)
                                  {
                                      StringBuilder r = new StringBuilder();
                                      r.Append("{");
+                                     r.Append($"\"path\": \"{paths[n]}\",");
                                      r.Append($"\"text\": \"{result?.Text}\",");
                                      r.Append($"\"tokens\":[{string.Join(",", result?.Tokens.Select(x => $"\"{x}\"").ToArray())}],");
                                      r.Append($"\"timestamps\":[{string.Join(",", result?.Timestamps.Select(x => $"[{x.First()},{x.Last()}]").ToArray())}]");
-                                     r.Append("}");
+                                     r.Append("}\n");
                                      AsrResults.Text = r.ToString();
-                                 }                                 
+                                     n++;
+                                 }
                                  TimeSpan end_time = new TimeSpan(DateTime.Now.Ticks);
                                  double elapsed_milliseconds = end_time.TotalMilliseconds - start_time.TotalMilliseconds;
                                  double rtf = elapsed_milliseconds / total_duration.TotalMilliseconds;
@@ -427,72 +440,114 @@ public partial class RecognitionForFiles : ContentPage
                          new Action(
                              delegate
                              {
-                                 AsrResults.Text = "正在识别，请稍后……";
+                                 AsrResults.Text = "Speech recognition in progress, please wait ...";
                              }
                              ));
         TimeSpan total_duration = new TimeSpan(0L);
-        if (samples == null)
+        List<string> paths = new List<string>();
+        try
         {
-            samples = new List<float[]>();
-            for (int i = 0; i < 1; i++)
+            if (samples == null)
             {
-                string wavFilePath = string.Format(SysConf.ApplicationBase + "/AllModels/" + _subFolderName + "/{0}.wav", i.ToString());
-                if (!File.Exists(wavFilePath))
+                samples = new List<float[]>();
+                string[]? mediaFilePaths = null;
+                if (mediaFilePaths == null || mediaFilePaths.Count() == 0)
                 {
-                    break;
+                    string fullPath = Path.Join(SysConf.ApplicationBase + "/AllModels/", _subFolderName);
+                    if (!Directory.Exists(fullPath))
+                    {
+                        mediaFilePaths = Array.Empty<string>(); // 路径不正确时返回空数组
+                    }
+                    else
+                    {
+                        //mediaFilePaths = Directory.GetFiles(fullPath);
+                        mediaFilePaths = Directory.GetFiles(
+                            path: fullPath,
+                            searchPattern: "*.wav",
+                            searchOption: SearchOption.AllDirectories
+                        );
+                    }
                 }
-                AudioFileReader _audioFileReader = new AudioFileReader(wavFilePath);
-                byte[] datas = new byte[_audioFileReader.Length];
-                _audioFileReader.Read(datas, 0, datas.Length);
-                TimeSpan duration = _audioFileReader.TotalTime;
-                float[] sample = new float[datas.Length / 4];
-                Buffer.BlockCopy(datas, 0, sample, 0, datas.Length);
-                if (sample != null)
+                foreach (string mediaFilePath in mediaFilePaths)
                 {
-                    samples.Add(sample);
-                    total_duration += duration;
+                    if (!File.Exists(mediaFilePath))
+                    {
+                        continue;
+                    }
+                    if (AudioHelper.IsAudioByHeader(mediaFilePath))
+                    {
+                        TimeSpan duration = TimeSpan.Zero;
+                        float[]? sample = AudioHelper.GetFileSample(wavFilePath: mediaFilePath, duration: ref duration);
+                        if (sample != null)
+                        {
+                            paths.Add(mediaFilePath);
+                            samples.Add(sample);
+                            total_duration += duration;
+                        }
+                    }
                 }
             }
-        }
-        AsrResults.Dispatcher.Dispatch(
+            if (samples.Count == 0)
+            {                
+                AsrResults.Dispatcher.Dispatch(
                          new Action(
                              delegate
                              {
-                                 TimeSpan start_time = new TimeSpan(DateTime.Now.Ticks);
-                                 List<AliParaformerAsr.OfflineStream> streams = new List<AliParaformerAsr.OfflineStream>();
-                                 foreach (var sample in samples)
-                                 {
-                                     AliParaformerAsr.OfflineStream stream = offlineRecognizer.CreateOfflineStream();
-                                     stream.AddSamples(sample);
-                                     streams.Add(stream);
-                                 }
-                                 List<AliParaformerAsr.Model.OfflineRecognizerResultEntity> results = offlineRecognizer.GetResults(streams);
-                                 foreach (AliParaformerAsr.Model.OfflineRecognizerResultEntity result in results)
-                                 {
-                                     if (!string.IsNullOrEmpty(result.Text))
-                                     {
-                                         Console.WriteLine(result.Text);
-                                         AsrResults.Text = string.Format("result:{0}\n", result.Text);
-                                     }
-                                     //for (int i = 0; i < result.Tokens.Count; i++)
-                                     //{
-                                     //    Console.WriteLine(string.Format("{0}:[{1},{2}]", result.Tokens[i], result.Timestamps[i].First(), result.Timestamps[i].Last()));
-                                     //}
-
-                                 }
-                                 TimeSpan end_time = new TimeSpan(DateTime.Now.Ticks);
-                                 double elapsed_milliseconds = end_time.TotalMilliseconds - start_time.TotalMilliseconds;
-                                 double rtf = elapsed_milliseconds / total_duration.TotalMilliseconds;
-                                 Console.WriteLine("elapsed_milliseconds:{0}", elapsed_milliseconds.ToString());
-                                 Console.WriteLine("total_duration:{0}", total_duration.TotalMilliseconds.ToString());
-                                 Console.WriteLine("rtf:{1}", "0".ToString(), rtf.ToString());
-                                 Console.WriteLine("Hello, World!");
-                                 AsrResults.Text += string.Format("elapsed_milliseconds:{0}\n", elapsed_milliseconds.ToString());
-                                 AsrResults.Text += string.Format("total_duration:{0}\n", total_duration.TotalMilliseconds.ToString());
-                                 AsrResults.Text += string.Format("rtf:{1}\n", "0".ToString(), rtf.ToString());
-                                 AsrResults.Text += string.Format("End!");
+                                 AsrResults.Text = "No media file is read!";
                              }
                              ));
+                return;
+            }
+            AsrResults.Dispatcher.Dispatch(
+                             new Action(
+                                 delegate
+                                 {
+                                     TimeSpan start_time = new TimeSpan(DateTime.Now.Ticks);
+                                     List<AliParaformerAsr.OfflineStream> streams = new List<AliParaformerAsr.OfflineStream>();
+                                     foreach (var sample in samples)
+                                     {
+                                         AliParaformerAsr.OfflineStream stream = offlineRecognizer.CreateOfflineStream();
+                                         stream.AddSamples(sample);
+                                         streams.Add(stream);
+                                     }
+                                     List<AliParaformerAsr.Model.OfflineRecognizerResultEntity> results = offlineRecognizer.GetResults(streams);
+                                     int n = 0;
+                                     foreach (AliParaformerAsr.Model.OfflineRecognizerResultEntity result in results)
+                                     {
+                                         StringBuilder r = new StringBuilder();
+                                         r.Append("{");
+                                         r.Append($"\"path\": \"{paths[n]}\",");
+                                         r.Append($"\"text\": \"{result?.Text}\",");
+                                         r.Append($"\"tokens\":[{string.Join(",", result?.Tokens.Select(x => $"\"{x}\"").ToArray())}],");
+                                         r.Append($"\"timestamps\":[{string.Join(",", result?.Timestamps.Select(x => $"[{x.First()},{x.Last()}]").ToArray())}]");
+                                         r.Append("}\n");
+                                         AsrResults.Text = r.ToString();
+                                         n++;
+                                     }
+                                     TimeSpan end_time = new TimeSpan(DateTime.Now.Ticks);
+                                     double elapsed_milliseconds = end_time.TotalMilliseconds - start_time.TotalMilliseconds;
+                                     double rtf = elapsed_milliseconds / total_duration.TotalMilliseconds;
+                                     Console.WriteLine("elapsed_milliseconds:{0}", elapsed_milliseconds.ToString());
+                                     Console.WriteLine("total_duration:{0}", total_duration.TotalMilliseconds.ToString());
+                                     Console.WriteLine("rtf:{1}", "0".ToString(), rtf.ToString());
+                                     Console.WriteLine("Hello, World!");
+                                     AsrResults.Text += string.Format("elapsed_milliseconds:{0}\n", elapsed_milliseconds.ToString());
+                                     AsrResults.Text += string.Format("total_duration:{0}\n", total_duration.TotalMilliseconds.ToString());
+                                     AsrResults.Text += string.Format("rtf:{1}\n", "0".ToString(), rtf.ToString());
+                                     AsrResults.Text += string.Format("End!");
+                                 }
+                                 ));
+        }
+        catch(Exception ex)
+        {
+            AsrResults.Dispatcher.Dispatch(
+                             new Action(
+                                 delegate
+                                 {
+                                     AsrResults.Text = ex.Message;
+                                 }
+                                 ));
+        }
 
     }
 }

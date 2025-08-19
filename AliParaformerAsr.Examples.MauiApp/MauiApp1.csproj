@@ -75,14 +75,4 @@
 	  </MauiXaml>
 	</ItemGroup>
 
-	<ItemGroup>
-	  <None Update="speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx\model_quant.onnx">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="AllModels\" />
-	</ItemGroup>
-
 </Project>
