@@ -453,7 +453,7 @@ public partial class RecognitionForFiles : ContentPage
                 string[]? mediaFilePaths = null;
                 if (mediaFilePaths == null || mediaFilePaths.Count() == 0)
                 {
-                    string fullPath = Path.Join(SysConf.ApplicationBase + "/AllModels/", _subFolderName);
+                    string fullPath = Path.Combine(SysConf.ApplicationBase + "/AllModels/", _subFolderName);
                     if (!Directory.Exists(fullPath))
                     {
                         mediaFilePaths = Array.Empty<string>(); // 路径不正确时返回空数组

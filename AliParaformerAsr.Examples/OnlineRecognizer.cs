@@ -20,7 +20,7 @@ namespace AliParaformerAsr.Examples
                 string tokensFilePath = modelBasePath + "./" + modelName + "/tokens.txt";
                 try
                 {
-                    string folderPath = Path.Join(modelBasePath, modelName);
+                    string folderPath = Path.Combine(modelBasePath, modelName);
                     // 1. Check if the folder exists
                     if (!Directory.Exists(folderPath))
                     {
@@ -128,7 +128,20 @@ namespace AliParaformerAsr.Examples
             List<float[]>? samples = new List<float[]>();
             if (mediaFilePaths == null || mediaFilePaths.Count() == 0)
             {
-                mediaFilePaths = Directory.GetFiles(Path.Join(modelBasePath, modelName, "test_wavs"));
+                //mediaFilePaths = Directory.GetFiles(Path.Combine(modelBasePath, modelName, "test_wavs"));
+                string fullPath = Path.Combine(modelBasePath, modelName);
+                if (!Directory.Exists(fullPath))
+                {
+                    mediaFilePaths = Array.Empty<string>(); // 路径不正确时返回空数组
+                }
+                else
+                {
+                    mediaFilePaths = Directory.GetFiles(
+                        path: fullPath,
+                        searchPattern: "*.wav",
+                        searchOption: SearchOption.AllDirectories
+                    );
+                }
             }
             foreach (string mediaFilePath in mediaFilePaths)
             {
