@@ -2,16 +2,16 @@
 
 ##### 简介：
 
-**AliParaformerAsr是一个使用C#编写的“语音识别”库，底层调用Microsoft.ML.OnnxRuntime对onnx模型进行解码，支持框架.Net6.0+，支持跨平台编译，支持AOT编译。使用简单方便。**
+AliParaformerAsr是一个使用C#编写的“语音识别”库，底层调用Microsoft.ML.OnnxRuntime对onnx模型进行解码，支持 net461+、net60+、netcoreapp3.1 及 netstandard2.0+ 等多种环境，支持跨平台编译，支持AOT编译。使用简单方便。
 
 ##### 支持的模型（ONNX）
 
 | 模型名称  |  类型 | 支持语言  | 标点  |  时间戳 | 下载地址  |
 | ------------ | ------------ | ------------ | ------------ | ------------ | ------------ |
-|  paraformer-large-zh-en-onnx-offline | 非流式  | 中文、英文  |  否 | 否  | [huggingface](https://huggingface.co/manyeyes/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx "huggingface"),  [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-zh-en-onnx-offline "modelscope") |
-|  paraformer-large-zh-en-timestamp-onnx-offline | 非流式  | 中文、英文  |  否 | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-zh-en-timestamp-onnx-offline "modelscope") |
-|  paraformer-large-en-onnx-offline | 非流式 | 英文 |  否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-en-onnx-offline "modelscope")  |
-|  paraformer-large-zh-en-onnx-online | 流式 | 中文、英文 |  否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/aliparaformerasr-large-zh-en-onnx-online "modelscope")  |
+|  paraformer-large-zh-en-onnx-offline | 非流式  | 中文、英文  |  否 | 否  | [huggingface](https://huggingface.co/manyeyes/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx "huggingface"),  [modelscope](https://www.modelscope.cn/models/manyeyes/paraformer-large-zh-en-onnx-offline "modelscope") |
+|  paraformer-large-zh-en-timestamp-onnx-offline | 非流式  | 中文、英文  |  否 | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/paraformer-large-zh-en-timestamp-onnx-offline "modelscope") |
+|  paraformer-large-en-onnx-offline | 非流式 | 英文 |  否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/paraformer-large-en-onnx-offline "modelscope")  |
+|  paraformer-large-zh-en-onnx-online | 流式 | 中文、英文 |  否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/paraformer-large-zh-en-onnx-online "modelscope")  |
 |  paraformer-large-zh-yue-en-timestamp-onnx-offline-dengcunqin-20240805 | 非流式 | 中文、粤语、英文 |  否  | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/paraformer-large-zh-yue-en-timestamp-onnx-offline-dengcunqin-20240805 "modelscope")  |
 |  paraformer-large-zh-yue-en-onnx-offline-dengcunqin-20240805 |  非流式 | 中文、粤语、英文 | 否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/paraformer-large-zh-yue-en-onnx-offline-dengcunqin-20240805 "modelscope") |
 |  paraformer-large-zh-yue-en-onnx-online-dengcunqin-20240208 |  流式 | 中文、粤语、英文 | 否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/paraformer-large-zh-yue-en-onnx-online-dengcunqin-20240208 "modelscope") |
