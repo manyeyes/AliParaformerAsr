@@ -427,7 +427,7 @@ namespace AliParaformerAsr
                     }
                 }
                 OnlineRecognizerResultEntity onlineRecognizerResultEntity = new OnlineRecognizerResultEntity();
-                onlineRecognizerResultEntity.text = text_result.Replace("@@▁▁", "").Replace("@@▁", "").Replace("▁▁", " ").Replace("▁", "").ToLower();
+                onlineRecognizerResultEntity.Text = text_result.Replace("@@▁▁", "").Replace("@@▁", "").Replace("▁▁", " ").Replace("▁", "").ToLower();
                 onlineRecognizerResultEntities.Add(onlineRecognizerResultEntity);
             }
 #pragma warning restore CS8602 // 解引用可能出现空引用。

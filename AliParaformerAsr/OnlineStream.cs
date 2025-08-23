@@ -4,8 +4,10 @@ using AliParaformerAsr.Model;
 
 namespace AliParaformerAsr
 {
-    public class OnlineStream
+    public class OnlineStream : IDisposable
     {
+        private bool _disposed;
+
         private int _fsmnDims;
         private int _fsmnLorder;
         private int _fsmnLayer;
@@ -314,35 +316,43 @@ namespace AliParaformerAsr
         }
         protected virtual void Dispose(bool disposing)
         {
-            if (disposing)
+            if (!_disposed)
             {
-                if (_wavFrontend != null)
+                if (disposing)
                 {
-                    _wavFrontend.Dispose();
+                    if (_wavFrontend != null)
+                    {
+                        _wavFrontend.Dispose();
+                    }
+                    if (_onlineInputEntity != null)
+                    {
+                        _onlineInputEntity = null;
+                    }
+                    if (_hyp != null)
+                    {
+                        _hyp = null;
+                    }
+                    if (_tokens != null)
+                    {
+                        _tokens = null;
+                    }
+                    if (_timestamps != null)
+                    {
+                        _timestamps = null;
+                    }
                 }
-                if (_onlineInputEntity != null)
-                {
-                    _onlineInputEntity = null;
-                }
-                if (_hyp != null)
-                {
-                    _hyp = null;
-                }
-                if (_tokens != null)
-                {
-                    _tokens = null;
-                }
-                if (_timestamps != null)
-                {
-                    _timestamps = null;
-                }
+                _disposed = true;
             }
         }
 
-        internal void Dispose()
+        public void Dispose()
         {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+        ~OnlineStream()
+        {
+            Dispose(_disposed);
         }
     }
 }

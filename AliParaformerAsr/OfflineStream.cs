@@ -4,8 +4,10 @@ using AliParaformerAsr.Model;
 
 namespace AliParaformerAsr
 {
-    public class OfflineStream
+    public class OfflineStream : IDisposable
     {
+        private bool _disposed;
+
         private WavFrontend _wavFrontend;
         private OfflineInputEntity _offlineInputEntity;
         private int _blank_id = 0;
@@ -22,7 +24,7 @@ namespace AliParaformerAsr
             _wavFrontend = new WavFrontend(mvnFilePath, confEntity.frontend_conf);
             _hyp = new Int64[] { _blank_id, _blank_id };
             _tokens = new List<Int64> { _blank_id, _blank_id };
-            _timestamps= new List<int[]> {  };
+            _timestamps = new List<int[]> { };
         }
 
         public OfflineInputEntity OfflineInputEntity { get => _offlineInputEntity; set => _offlineInputEntity = value; }
@@ -77,35 +79,43 @@ namespace AliParaformerAsr
         }
         protected virtual void Dispose(bool disposing)
         {
-            if (disposing)
+            if (!_disposed)
             {
-                if (_wavFrontend != null)
+                if (disposing)
                 {
-                    _wavFrontend.Dispose();
+                    if (_wavFrontend != null)
+                    {
+                        _wavFrontend.Dispose();
+                    }
+                    if (_offlineInputEntity != null)
+                    {
+                        _offlineInputEntity = null;
+                    }
+                    if (_hyp != null)
+                    {
+                        _hyp = null;
+                    }
+                    if (_tokens != null)
+                    {
+                        _tokens = null;
+                    }
+                    if (_timestamps != null)
+                    {
+                        _timestamps = null;
+                    }
                 }
-                if (_offlineInputEntity != null)
-                {
-                    _offlineInputEntity = null;
-                }
-                if (_hyp != null)
-                {
-                    _hyp = null;
-                }
-                if (_tokens != null)
-                {
-                    _tokens = null;
-                }
-                if (_timestamps != null)
-                {
-                    _timestamps = null;
-                }
+                _disposed = true;
             }
         }
 
-        internal void Dispose()
+        public void Dispose()
         {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+        ~OfflineStream()
+        {
+            Dispose(_disposed);
         }
     }
 }

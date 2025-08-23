@@ -8,8 +8,6 @@ namespace AliParaformerAsr.Model
     /// </summary>
     public class OfflineRecognizerResultEntity
     {
-        private List<string>? _tokens=new List<string>();
-        private List<int[]>? _timestamps=new List<int[]>();
         /// <summary>
         /// recognizer result
         /// </summary>
@@ -21,14 +19,12 @@ namespace AliParaformerAsr.Model
         /// <summary>
         /// decode tokens
         /// </summary>
-        //public List<string>? tokens { get; set; }
-        public List<string>? Tokens { get => _tokens; set => _tokens = value; }
+        public List<string>? Tokens { get; set; }
 
         /// <summary>
         /// timestamps
         /// </summary>
-        //public List<int[]>? timestamps { get; set; }
-        public List<int[]>? Timestamps { get => _timestamps; set => _timestamps = value; }
+        public List<int[]>? Timestamps { get; set; }
 
     }
 }

@@ -11,18 +11,19 @@ namespace AliParaformerAsr.Model
         /// <summary>
         /// recognizer result
         /// </summary>
-        public string? text { get; set; }
+        public string? Text { get; set; }
         /// <summary>
         /// recognizer result length
         /// </summary>
-        public int text_len { get; set; }
+        public int TextLen { get; set; }
         /// <summary>
         /// decode tokens
         /// </summary>
-        public List<string>? tokens { get; set; }
+        public List<string>? Tokens { get; set; }
+
         /// <summary>
         /// timestamps
         /// </summary>
-        public List<float>? timestamps { get; set; }
+        public List<int[]>? Timestamps { get; set; }
     }
 }
