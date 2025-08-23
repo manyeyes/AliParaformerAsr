@@ -189,7 +189,7 @@ namespace AliParaformerAsr.Examples
                     {
                         stream.AddSamples(samplesItem);
                         AliParaformerAsr.Model.OnlineRecognizerResultEntity result = onlineRecognizer.GetResult(stream);
-                        Console.WriteLine(result.text);
+                        Console.WriteLine(result.Text);
                     }
                 }
                 // one stream decode
