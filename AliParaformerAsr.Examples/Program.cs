@@ -5,6 +5,8 @@
  * Model Download:
  * Please read README.md
  */
+using System.Text;
+
 namespace AliParaformerAsr.Examples
 {
     internal static partial class Program
@@ -34,6 +36,7 @@ namespace AliParaformerAsr.Examples
         [STAThread]
         static void Main(string[] args)
         {
+            Console.OutputEncoding = Encoding.UTF8;
             while (true)
             {
                 try
@@ -91,7 +94,7 @@ namespace AliParaformerAsr.Examples
                                     break;
                             }
                         }
-                        Console.WriteLine($"Select example: 1.AliParaformerAsr-offline-example; 2.AliParaformerAsr-online-example;");
+                        Console.WriteLine($"Select example: 1.offline; 2.online;");
                         int selectExample = 0;
                         while (true)
                         {
@@ -102,15 +105,13 @@ namespace AliParaformerAsr.Examples
                         }
                         if (selectExample > 0)
                         {
-                            string defaultOnlineModelName = "";
-                            string defaultOfflineModelName = "";
                             switch (selectExample)
                             {
                                 case 1:
-                                    commandLineArgs = new string[] { "-type", "offline", "-batch", "one" };
+                                    commandLineArgs = new string[] { "-type", "offline" };
                                     break;
                                 case 2:
-                                    commandLineArgs = new string[] { "-type", "online", "-batch", "one" };
+                                    commandLineArgs = new string[] { "-type", "online" };
                                     break;
                             }
                         }
@@ -121,7 +122,7 @@ namespace AliParaformerAsr.Examples
                 {
                     { "modelBasePath", Environment.GetEnvironmentVariable(EnvModelBasePath)??""},
                     { "recognizerType", Environment.GetEnvironmentVariable(EnvRecognizerType)},
-                    { "batchType", Environment.GetEnvironmentVariable(EnvBatchType) },
+                    { "batchType", Environment.GetEnvironmentVariable(EnvBatchType) ?? "one" },
                     { "modelName", Environment.GetEnvironmentVariable(EnvModelName) ?? "default-model" },
                     { "modelAccuracy", Environment.GetEnvironmentVariable(EnvModelAccuracy) ?? "int8" },
                     { "threads", Environment.GetEnvironmentVariable(EnvThreads) ?? "2" }
@@ -156,7 +157,7 @@ namespace AliParaformerAsr.Examples
                 // Initialize default values (from environment variables)
                 { "modelBasePath", envConfig["modelBasePath"] },
                 { "recognizerType", envConfig["recognizerType"] },
-                { "batchType", envConfig["batchType"] },
+                { "batchType", envConfig["batchType"] ?? "one" },
                 { "modelName", envConfig["modelName"] },
                 { "modelAccuracy", envConfig["modelAccuracy"] },
                 { "threads", int.Parse(envConfig["threads"]!) },
@@ -206,11 +207,9 @@ namespace AliParaformerAsr.Examples
                 }
             }
 
-            // verify required parameters
+            // verify required parameters：-type is mandatory
             if (config["recognizerType"] == null)
                 throw new ArgumentException("You must specify the recognizer type (-type online/offline) or set an environment variable " + EnvRecognizerType);
-            if (config["batchType"] == null)
-                throw new ArgumentException("You must specify the batch type（-batch one/multi） or set  an environment variables " + EnvBatchType);
 
             return config;
         }
@@ -228,14 +227,14 @@ namespace AliParaformerAsr.Examples
             int threads = (int)config["threads"];
             string[] files = (string[])config["files"];
 
-            string defaultOnlineModelName = _defaultOnlineModelName.GetValueOrDefault("aliparaformerasr"); ;
-            string defaultOfflineModelName = _defaultOfflineModelName.GetValueOrDefault("aliparaformerasr"); ;
+            string defaultOnlineModelName = _defaultOnlineModelName.GetValueOrDefault("aliparaformerasr");
+            string defaultOfflineModelName = _defaultOfflineModelName.GetValueOrDefault("aliparaformerasr");
             if (_lang.ToLower() == "zh")
             {
                 Console.WriteLine($"===== 识别器配置 =====");
                 Console.WriteLine($"模型目录: {modelBasePath ?? ""}");
                 Console.WriteLine($"类型: {recognizerType}");
-                Console.WriteLine($"批量模式: {batchType}");
+                Console.WriteLine($"批量模式: {batchType}（默认: one）");
                 Console.WriteLine(string.Format("模型: {0}", modelName == "default-model" ? (recognizerType == "online" ? defaultOnlineModelName : defaultOfflineModelName) : modelName));
                 Console.WriteLine($"精度: {modelAccuracy}");
                 Console.WriteLine($"线程数: {threads}");
@@ -247,7 +246,7 @@ namespace AliParaformerAsr.Examples
                 Console.WriteLine("===== RecognizerConfiguration =====");
                 Console.WriteLine($"Model Directory: {modelBasePath ?? ""}");
                 Console.WriteLine($"Type:{recognizerType}");
-                Console.WriteLine($"Batch Mode: {batchType}");
+                Console.WriteLine($"Batch Mode: {batchType} (default: one)");
                 Console.WriteLine(string.Format("Model: {0}", modelName == "default-model" ? (recognizerType == "online" ? defaultOnlineModelName : defaultOfflineModelName) : modelName));
                 Console.WriteLine($"Precision:{modelAccuracy}");
                 Console.WriteLine($"Number of Threads: {threads}");
@@ -302,8 +301,8 @@ namespace AliParaformerAsr.Examples
                 Console.WriteLine("\n使用说明: AliParaformerAsr.Examples.exe [参数]");
                 Console.WriteLine("必选参数（或通过环境变量设置）:");
                 Console.WriteLine($"  -type <online/offline>   识别器类型（环境变量: {EnvRecognizerType}）");
-                Console.WriteLine($"  -batch <one/multi>       批量处理模式（环境变量: {EnvBatchType}）");
                 Console.WriteLine("可选参数:");
+                Console.WriteLine($"  -batch <one/multi>       批量处理模式（默认: one，环境变量: {EnvBatchType}）");
                 Console.WriteLine($"  -base <可指定模型存放目录，或为空>   模型存放目录（环境变量: {EnvModelBasePath}）");
                 Console.WriteLine($"  -model <名称>            模型名称（默认: default-model，环境变量: {EnvModelName}）");
                 Console.WriteLine($"  -accuracy <fp32/int8>    模型名称（默认: int8，环境变量: {EnvModelAccuracy}）");
@@ -311,8 +310,8 @@ namespace AliParaformerAsr.Examples
                 Console.WriteLine("  -files <文件1> <文件2>    输入媒体文件列表(如不指定，默认:自动检查并识别模型目录下test_wavs中的文件)");
                 Console.WriteLine("\n示例1:");
                 Console.WriteLine("  AliParaformerAsr.Examples.exe -type online -batch one -base /path/to/directory -model my-model -accuracy int8 -threads 2 -files /path/to/0.wav /path/to/1.wav");
-                Console.WriteLine("\n示例2:");
-                Console.WriteLine($"  set {EnvRecognizerType}=online && set {EnvBatchType}=one && set {EnvModelBasePath}=/path/to/directory && set {EnvModelName}=aliparaformerasr-large-zh-en-onnx-online && AliParaformerAsr.Examples.exe");
+                Console.WriteLine("\n示例2（使用默认batch=one）:");
+                Console.WriteLine($"  set {EnvRecognizerType}=online && set {EnvModelBasePath}=/path/to/directory && AliParaformerAsr.Examples.exe");
                 Console.WriteLine($"\n*应用程序目录：{applicationBase}, 如果不指定-base, 请将下载的模型存放于此目录。");
                 Console.WriteLine($"\n*附加说明：按2次回车，可根据提示操作：1.选择语言；2.选择识别器类型。");
             }
@@ -321,8 +320,8 @@ namespace AliParaformerAsr.Examples
                 Console.WriteLine("\nUsage Instructions: AliParaformerAsr.Examples.exe [parameters]");
                 Console.WriteLine("Required parameters (or set via environment variables):");
                 Console.WriteLine($"  -type <online/offline>   Recognizer type (environment variable: {EnvRecognizerType})");
-                Console.WriteLine($"  -batch <one/multi>       Batch processing mode (environment variable: {EnvBatchType})");
                 Console.WriteLine("Optional parameters:");
+                Console.WriteLine($"  -batch <one/multi>       Batch processing mode (default: one, environment variable: {EnvBatchType})");
                 Console.WriteLine($"  -base <specifiable model directory, or empty>   Model storage directory (environment variable: {EnvModelBasePath})");
                 Console.WriteLine($"  -model <name>            Model name (default: default-model, environment variable: {EnvModelName})");
                 Console.WriteLine($"  -accuracy <fp32/int8>    Precision (default: int8, environment variable: {EnvModelAccuracy})");
@@ -330,8 +329,8 @@ namespace AliParaformerAsr.Examples
                 Console.WriteLine("  -files <file1> <file2>    List of input media files (if not specified, default: automatically check and recognize files in test_wavs under the model directory)");
                 Console.WriteLine("\nExample 1:");
                 Console.WriteLine("  AliParaformerAsr.Examples.exe -type online -batch one -base /path/to/directory -model my-model -accuracy int8 -threads 2 -files /path/to/0.wav /path/to/1.wav");
-                Console.WriteLine("\nExample 2:");
-                Console.WriteLine($"  set {EnvRecognizerType}=online && set {EnvBatchType}=one && set {EnvModelBasePath}=/path/to/directory && set {EnvModelName}=aliparaformerasr-large-zh-en-onnx-online && AliParaformerAsr.Examples.exe");
+                Console.WriteLine("\nExample 2 (use default batch=one):");
+                Console.WriteLine($"  set {EnvRecognizerType}=online && set {EnvModelBasePath}=/path/to/directory && AliParaformerAsr.Examples.exe");
                 Console.WriteLine($"\n*Application directory: {applicationBase}. If -base is not specified, please place the downloaded model in this directory.");
                 Console.WriteLine($"\n*Additional notes: Press Enter twice, and you can follow the prompts to proceed: 1. Select language; 2. Select recognizer type.");
             }

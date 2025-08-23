@@ -8,7 +8,7 @@
 				<Nullable>enable</Nullable>
 				<PublishAot>false</PublishAot>
 				<ApplicationManifest>app.manifest</ApplicationManifest>
-				<Version>1.1.2</Version>
+				<Version>1.1.6</Version>
 		</PropertyGroup>
 
 		<ItemGroup>
@@ -17,7 +17,7 @@
 		</ItemGroup>
 
 		<ItemGroup>
-				<PackageReference Include="ManySpeech.AliParaformerAsr" Version="1.1.4" />
+				<PackageReference Include="ManySpeech.AliParaformerAsr" Version="1.1.6" />
 				<PackageReference Include="NAudio" Version="2.2.1" />
 		</ItemGroup>
 

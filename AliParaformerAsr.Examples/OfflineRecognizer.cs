@@ -6,7 +6,7 @@ namespace AliParaformerAsr.Examples
     internal static partial class Program
     {
         private static AliParaformerAsr.OfflineRecognizer? _offlineRecognizer;
-        public static OfflineRecognizer InitOfflineRecognizer(string modelName, string modelBasePath, string modelAccuracy = "int8", int threadsNum = 2)
+        public static AliParaformerAsr.OfflineRecognizer InitOfflineRecognizer(string modelName, string modelBasePath, string modelAccuracy = "int8", int threadsNum = 2)
         {
             if (_offlineRecognizer == null)
             {
