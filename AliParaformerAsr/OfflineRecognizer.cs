@@ -56,7 +56,7 @@ namespace AliParaformerAsr
                 if (configFilePath.ToLower().EndsWith(".json"))
                 {
                     //confJsonEntity = Utils.PreloadHelper.ReadJson<ConfEntity>(configFilePath);
-                    confJsonEntity = Utils.PreloadHelper.ReadJson(configFilePath);
+                    confJsonEntity = Utils.PreloadHelper.ReadJson(configFilePath); // To compile for AOT
                 }
                 else if (configFilePath.ToLower().EndsWith(".yaml"))
                 {

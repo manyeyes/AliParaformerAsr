@@ -15,14 +15,15 @@
 				<Nullable>enable</Nullable>
 				<!-- info -->
 				<PackageId>ManySpeech.AliParaformerAsr</PackageId>
-				<Version>1.1.6</Version>
-				<Authors>manyeyes</Authors>
+				<Version>1.1.7</Version>
+				<Authors>manyeyes contributors</Authors>
+				<Company>manyeyes contributors</Company>
+				<Copyright>Copyright © manyeyes contributors</Copyright>
 				<Summary>c# library for decoding paraformer, sensevoice Models，used in speech recognition (ASR)</Summary>
 				<Description>c# library for decoding paraformer, sensevoice Models，used in speech recognition (ASR).Paraformer is an efficient non autoregressive end-to-end speech recognition framework proposed by the speech team at Damo Institute. This project is a Paraformer Chinese universal speech recognition model, which uses tens of thousands of hours of industrial grade annotated audio for model training to ensure the universal recognition effect of the model. The model can be applied to scenarios such as voice input methods, voice navigation, and intelligent meeting minutes. Accuracy: High.</Description>
-				<Copyright>copyright@2024 manyeyes</Copyright>
+				<PackageTags>speech recognition asr paraformer sensevoice ai local privacy</PackageTags>
 				<PackageProjectUrl>https://github.com/manyeyes/AliParaformerAsr</PackageProjectUrl>
 				<RepositoryUrl>https://github.com/manyeyes/AliParaformerAsr</RepositoryUrl>
-				<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 				<IncludeSymbols>true</IncludeSymbols>
 				<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 				<Nullable>enable</Nullable>

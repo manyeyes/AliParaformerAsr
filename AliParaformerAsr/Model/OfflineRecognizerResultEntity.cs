@@ -19,12 +19,12 @@ namespace AliParaformerAsr.Model
         /// <summary>
         /// decode tokens
         /// </summary>
-        public List<string>? Tokens { get; set; }
+        public List<string>? Tokens { get; set; } = new List<string>();
 
         /// <summary>
         /// timestamps
         /// </summary>
-        public List<int[]>? Timestamps { get; set; }
+        public List<int[]>? Timestamps { get; set; } = new List<int[]>();
 
     }
 }
