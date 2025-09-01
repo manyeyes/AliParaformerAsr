@@ -86,8 +86,13 @@ namespace AliParaformerAsr.Utils
                 }
             }
             return info;
-        }        
-
+        }
+        /// <summary>
+        /// ReadJson for ConfEntity (To compile for AOT)
+        /// </summary>
+        /// <param name="jsonFilePath"></param>
+        /// <returns></returns>
+        /// <exception cref="FileNotFoundException"></exception>
         public static Model.ConfEntity? ReadJson(string jsonFilePath)
         {
             Model.ConfEntity? info = new Model.ConfEntity();
