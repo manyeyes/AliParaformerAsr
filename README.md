@@ -293,5 +293,3 @@ Sampler：通过采样，将声学特征向量与目标文字向量变换成含�
 ----------
 [1] https://github.com/alibaba-damo-academy/FunASR
 
-[2] https://github.com/naudio/NAudio
-

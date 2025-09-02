@@ -28,7 +28,7 @@
 				<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 				<Nullable>enable</Nullable>
 				<LangVersion>latest</LangVersion>
-				<PackageReadmeFile>App_Readme/README.md</PackageReadmeFile>
+				<PackageReadmeFile>App_Readme/README.EN.md</PackageReadmeFile>
 				<PackageLicenseFile>App_Readme/LICENSE</PackageLicenseFile>
 				<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 				<!--<PackageOutputPath>$(ArtifactsPath)\package</PackageOutputPath>-->
@@ -41,6 +41,7 @@
 		
 		<ItemGroup>
 				<None Include="..\README.md" Pack="true" PackagePath="App_Readme/" Visible="false" />
+				<None Include="..\README.EN.md" Pack="true" PackagePath="App_Readme/" Visible="false" />
 				<None Include="..\LICENSE" Pack="true" PackagePath="App_Readme/" Visible="false" />
 		</ItemGroup>
 
