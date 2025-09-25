@@ -3,8 +3,8 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-//using YamlDotNet.Serialization;
-//using YamlDotNet.Serialization.NamingConventions;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace AliParaformerAsr.Utils
 {
@@ -16,19 +16,19 @@ namespace AliParaformerAsr.Utils
         // 生成器会自动填充实现
     }
     // 源生成器的上下文配置
-    //[YamlStaticContext]
-    //[YamlSerializable(typeof(Model.ConfEntity))] // 指定需要序列化的类型
-    //[YamlSerializable(typeof(Model.FrontendConfEntity))]
-    //[YamlSerializable(typeof(Model.ModelConfEntity))]
-    //[YamlSerializable(typeof(Model.PostEncoderConfEntity))]
-    //[YamlSerializable(typeof(Model.EncoderConfEntity))]
-    //[YamlSerializable(typeof(Model.PostEncoderConfEntity))]
-    //[YamlSerializable(typeof(Model.DecoderConfEntity))]
-    //[YamlSerializable(typeof(Model.PredictorConfEntity))]
-    //public partial class YamlStaticContext : YamlDotNet.Serialization.StaticContext
-    //{
-    //    // 生成器会自动填充实现
-    //}
+    [YamlStaticContext]
+    [YamlSerializable(typeof(Model.ConfEntity))] // 指定需要序列化的类型
+    [YamlSerializable(typeof(Model.FrontendConfEntity))]
+    [YamlSerializable(typeof(Model.ModelConfEntity))]
+    [YamlSerializable(typeof(Model.PostEncoderConfEntity))]
+    [YamlSerializable(typeof(Model.EncoderConfEntity))]
+    [YamlSerializable(typeof(Model.PostEncoderConfEntity))]
+    [YamlSerializable(typeof(Model.DecoderConfEntity))]
+    [YamlSerializable(typeof(Model.PredictorConfEntity))]
+    public partial class YamlStaticContext : YamlDotNet.Serialization.StaticContext
+    {
+        // 生成器会自动填充实现
+    }
 
     /// <summary>
     /// PreloadHelper
@@ -39,8 +39,7 @@ namespace AliParaformerAsr.Utils
         public static T? ReadYaml<T>(string yamlFilePath)
         {
             T? info = default(T);
-            ////Deserializer yamlDeserializer = new Deserializer();
-            //IDeserializer yamlDeserializer = new StaticDeserializerBuilder(new YamlStaticContext()).WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
+            IDeserializer yamlDeserializer = new StaticDeserializerBuilder(new YamlStaticContext()).WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
             if (!string.IsNullOrEmpty(yamlFilePath) && yamlFilePath.IndexOf("/") < 0 && yamlFilePath.IndexOf("\\") < 0)
             {
                 var assembly = Assembly.GetExecutingAssembly();
@@ -48,7 +47,7 @@ namespace AliParaformerAsr.Utils
                              throw new FileNotFoundException($"Embedded resource '{yamlFilePath}' not found.");
                 using (var yamlReader = new StreamReader(stream))
                 {
-                    //info = yamlDeserializer.Deserialize<T>(yamlReader);
+                    info = yamlDeserializer.Deserialize<T>(yamlReader);
                     yamlReader.Close();
                 }
             }
@@ -56,7 +55,7 @@ namespace AliParaformerAsr.Utils
             {
                 using (var yamlReader = File.OpenText(yamlFilePath))
                 {
-                    //info = yamlDeserializer.Deserialize<T>(yamlReader);
+                    info = yamlDeserializer.Deserialize<T>(yamlReader);
                     yamlReader.Close();
                 }
             }
@@ -121,19 +120,22 @@ namespace AliParaformerAsr.Utils
         public static string[] ReadTokens(string tokensFilePath)
         {
             string[] tokens = null;
-            if (!string.IsNullOrEmpty(tokensFilePath) && tokensFilePath.IndexOf("/") < 0 && tokensFilePath.IndexOf("\\") < 0)
+            if (!string.IsNullOrEmpty(tokensFilePath))
             {
-                var assembly = Assembly.GetExecutingAssembly();
-                var stream = assembly.GetManifestResourceStream(tokensFilePath) ??
-                             throw new FileNotFoundException($"Embedded resource '{tokensFilePath}' not found.");
-                using (var reader = new StreamReader(stream))
+                if (tokensFilePath.IndexOf("/") < 0 && tokensFilePath.IndexOf("\\") < 0)
                 {
-                    tokens = reader.ReadToEnd().Split('\n');//Environment.NewLine
+                    var assembly = Assembly.GetExecutingAssembly();
+                    var stream = assembly.GetManifestResourceStream(tokensFilePath) ??
+                                 throw new FileNotFoundException($"Embedded resource '{tokensFilePath}' not found.");
+                    using (var reader = new StreamReader(stream))
+                    {
+                        tokens = reader.ReadToEnd().Split('\n');//Environment.NewLine
+                    }
                 }
-            }
-            else
-            {
-                tokens = File.ReadAllLines(tokensFilePath);
+                else
+                {
+                    tokens = File.ReadAllLines(tokensFilePath);
+                }
             }
             return tokens;
         }

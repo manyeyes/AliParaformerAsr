@@ -9,7 +9,7 @@ namespace MauiApp1.Utils
     internal class SysConf
     {
 #if WINDOWS
-    private static string _applicationBase = Microsoft.Maui.Storage.FileSystem.AppDataDirectory;// "/data/user/0/com.companyname.mauiapp1/files/AllModels";//"/data/data/com.companyname.mauiapp1/files/Assets";// AppDomain.CurrentDomain.BaseDirectory;//
+        private static string _applicationBase = Microsoft.Maui.Storage.FileSystem.AppDataDirectory;
 #else
         private static string _applicationBase = AppDomain.CurrentDomain.BaseDirectory;
 #endif

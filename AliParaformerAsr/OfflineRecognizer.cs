@@ -27,6 +27,10 @@ namespace AliParaformerAsr
             _offlineModel.Use_itn = _confEntity.use_itn;
             _mvnFilePath = mvnFilePath;
             _tokens = Utils.PreloadHelper.ReadTokens(tokensFilePath);
+            if (_tokens == null || _tokens.Length == 0)
+            {
+                throw new Exception("tokens invalid");
+            }
             if (!string.IsNullOrEmpty(hotwordFilePath))
             {
                 List<int[]>? hotwords = GetHotwords(_tokens, hotwordFilePath);
@@ -87,6 +91,10 @@ namespace AliParaformerAsr
 
         public OfflineStream CreateOfflineStream()
         {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException("OfflineRecognizer");
+            }
             OfflineStream offlineStream = new OfflineStream(_mvnFilePath, _confEntity);
             return offlineStream;
         }
@@ -280,12 +288,12 @@ namespace AliParaformerAsr
             {
                 bool charX = new_char_list[i];
                 float[] timestamp = timestamp_list[i];
-    
+
                 if (charX)
                 {
-                    timestamps.Add(new int[] { 
-                        (int)(timestamp[0] * 1000), 
-                        (int)(timestamp[1] * 1000) 
+                    timestamps.Add(new int[] {
+                        (int)(timestamp[0] * 1000),
+                        (int)(timestamp[1] * 1000)
                     });
                 }
             }
@@ -311,7 +319,7 @@ namespace AliParaformerAsr
                     Int64 token = result.First;
                     int[] timestamp = result.Second;
 #else
-for (int i = 0; i < stream.Tokens.Count && i < stream.Timestamps.Count; i++)
+                for (int i = 0; i < stream.Tokens.Count && i < stream.Timestamps.Count; i++)
                 {
                     Int64 token = stream.Tokens[i];
                     int[] timestamp = stream.Timestamps[i];
@@ -446,6 +454,7 @@ for (int i = 0; i < stream.Tokens.Count && i < stream.Timestamps.Count; i++)
                     if (_offlineModel != null)
                     {
                         _offlineModel.Dispose();
+                        _offlineModel = null;
                     }
                     if (_tokens != null)
                     {

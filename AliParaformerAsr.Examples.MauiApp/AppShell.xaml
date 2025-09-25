@@ -7,13 +7,13 @@
     Shell.FlyoutBehavior="Disabled">
     <FlyoutItem FlyoutDisplayOptions="AsMultipleItems">
         <ShellContent
-        Title="Offline"
-        ContentTemplate="{DataTemplate local:RecognitionForFiles}"
-        Route="MainPage" />
-        <ShellContent
         Title="Home"
         ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />        
+        Route="MainPage" />  
+        <ShellContent
+        Title="Offline"
+        ContentTemplate="{DataTemplate local:RecognitionForFiles}"
+        Route="MainPage" />      
     </FlyoutItem>
 
 </Shell>
