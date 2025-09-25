@@ -15,7 +15,7 @@
 				<Nullable>enable</Nullable>
 				<!-- info -->
 				<PackageId>ManySpeech.AliParaformerAsr</PackageId>
-				<Version>1.1.7</Version>
+				<Version>1.1.8</Version>
 				<Authors>manyeyes contributors</Authors>
 				<Company>manyeyes contributors</Company>
 				<Copyright>Copyright © manyeyes contributors</Copyright>
@@ -47,9 +47,9 @@
 
 		<ItemGroup>
 				<PackageReference Include="ManySpeech.SpeechFeatures" Version="1.1.7" />
-				<PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.22.1" />
-				<!--<PackageReference Include="YamlDotNet" Version="16.3.0" />
-				<PackageReference Include="Vecc.YamlDotNet.Analyzers.StaticGenerator" Version="16.3.0" />-->
+				<PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.22.*" />
+				<PackageReference Include="YamlDotNet" Version="16.3.0" />
+				<PackageReference Include="Vecc.YamlDotNet.Analyzers.StaticGenerator" Version="16.3.0" />
 				<!-- System.Text.Json：仅为不原生支持的框架添加引用 -->
 				<PackageReference Include="System.Text.Json" Version="9.0.8" Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1' OR '$(TargetFramework)' == 'netcoreapp3.1' OR '$(TargetFramework)' == 'net461' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48'" />
 

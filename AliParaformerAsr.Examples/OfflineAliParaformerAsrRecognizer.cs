@@ -3,7 +3,7 @@ using System.Text;
 
 namespace AliParaformerAsr.Examples
 {
-    internal static partial class Program
+    internal partial class AliParaformerAsrRecognizer : BaseAsr
     {
         private static AliParaformerAsr.OfflineRecognizer? _offlineRecognizer;
         public static AliParaformerAsr.OfflineRecognizer InitOfflineRecognizer(string modelName, string modelBasePath, string modelAccuracy = "int8", int threadsNum = 2)
@@ -67,7 +67,7 @@ namespace AliParaformerAsr.Examples
 
                     // Process config paths (take the last one that matches the prefix)
                     configFilePath = fileInfos
-                        .LastOrDefault(f => f.FileName.StartsWith("asr") && (f.FileName.EndsWith(".json")))
+                        .LastOrDefault(f => f.FileName.StartsWith("asr") && (f.FileName.EndsWith(".yaml") || f.FileName.EndsWith(".json")))
                         ?.TargetPath ?? "";
 
                     // Process mvn paths (take the last one that matches the prefix)
@@ -167,7 +167,7 @@ namespace AliParaformerAsr.Examples
             }
             Console.WriteLine("Automatic speech recognition in progress!");
             TimeSpan start_time = new TimeSpan(DateTime.Now.Ticks);
-            streamDecodeMethod = string.IsNullOrEmpty(streamDecodeMethod) ? "multi" : streamDecodeMethod;//one ,multi
+            streamDecodeMethod = string.IsNullOrEmpty(streamDecodeMethod) ? "batch" : streamDecodeMethod;//one ,batch
             if (streamDecodeMethod == "one")
             {
                 // Non batch method
@@ -201,7 +201,7 @@ namespace AliParaformerAsr.Examples
                 }
                 // Non batch method
             }
-            if (streamDecodeMethod == "multi")
+            if (streamDecodeMethod == "batch")
             {
                 //2. batch method
                 Console.WriteLine("Recognition results:\r\n");

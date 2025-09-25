@@ -17,8 +17,12 @@
 		</ItemGroup>
 
 		<ItemGroup>
-				<PackageReference Include="ManySpeech.AliParaformerAsr" Version="1.1.6" />
+				<PackageReference Include="LibGit2Sharp" Version="0.31.0" />
 				<PackageReference Include="NAudio" Version="2.2.1" />
+		</ItemGroup>
+
+		<ItemGroup>
+		  <ProjectReference Include="..\AliParaformerAsr\AliParaformerAsr.csproj" />
 		</ItemGroup>
 
 </Project>

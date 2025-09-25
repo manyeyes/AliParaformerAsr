@@ -13,10 +13,11 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="80" />
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="40" />
-                        <RowDefinition Height="15" />
+                        <RowDefinition Height="*" />
                         <RowDefinition Height="*" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
@@ -28,28 +29,34 @@
                 Text="Check"
                 SemanticProperties.Hint="Counts the number of times you click"
                 Clicked="OnDownLoadCheckClicked"
-                HorizontalOptions="Center" />
+                HorizontalOptions="EndAndExpand" />
                     <Button Grid.Row="0" Grid.Column="2"
                 x:Name="BtnDownLoadModels"
                 Text="Download"
                 SemanticProperties.Hint="Counts the number of times you click"
                 Clicked="OnDownLoadModelsClicked"
                 HorizontalOptions="EndAndExpand" />
-                    <Label Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
-                x:Name="DownloadProgressLabel"
+                    <Button Grid.Row="0" Grid.Column="3"
+                x:Name="BtnDeleteModels"
+                Text="Delete"
+                SemanticProperties.Hint="Counts the number of times you click"
+                Clicked="OnDeleteModelsClicked"
+                HorizontalOptions="EndAndExpand" />
+                    <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4"
+                x:Name="DownloadResultsLabel" Padding="10,5"
+                Text="" IsVisible="False"
+                BackgroundColor="White"
+                TextColor="Red"/>
+                    <Label Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4"
+                x:Name="DownloadProgressLabel" Padding="10,5"
                 Text="" IsVisible="False"
                 BackgroundColor="White"
                            HorizontalOptions="FillAndExpand"
                            HorizontalTextAlignment="Start"
-                TextColor="Red"/>
+                TextColor="Green"/>
                     <ProgressBar  IsVisible="False" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3"
                     x:Name="DownloadProgressBar" HorizontalOptions="FillAndExpand" />
                 </Grid>
-                <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
-                x:Name="DownloadResultsLabel"
-                Text="" IsVisible="False"
-                BackgroundColor="White"
-                TextColor="Red"/>
                 <Grid ColumnSpacing="5" RowSpacing="5">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="4*" />

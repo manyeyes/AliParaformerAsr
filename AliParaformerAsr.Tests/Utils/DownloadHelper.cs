@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Windows.Input;
 
-namespace MauiApp1.Utils
+namespace AliParaformerAsr.Tests.Utils
 {
     /// <summary>
     /// Enumeration representing the state of a file download
@@ -141,15 +141,16 @@ namespace MauiApp1.Utils
         /// <param name="fileName">Name of the file to save</param>
         /// <param name="rootFolder">Root folder for the download</param>
         /// <param name="modelName">Model name (used for folder structure)</param>
-        public void DownloadCreate(string downloadUrl, string fileName, string modelBase, string modelName)
+        public void DownloadCreate(string downloadUrl, string fileName, string modelBasePath, string modelName)
         {
             lock (_lockobj)
             {
                 FileName = fileName;
-                var modelFolder = Path.Combine(modelBase, modelName);
+                var downloadFolder = modelBasePath;
+                var modelFolder = Path.Combine(downloadFolder, modelName);
 
                 // Create folders if they don't exist
-                Directory.CreateDirectory(modelBase);
+                Directory.CreateDirectory(downloadFolder);
                 Directory.CreateDirectory(modelFolder);
 
                 string fileFullname = Path.Combine(modelFolder, fileName);
@@ -300,13 +301,14 @@ namespace MauiApp1.Utils
         /// <param name="rootFolderName">Root folder of the model files</param>
         /// <param name="modelName">Model name (for folder path)</param>
         /// <returns>True if all files are valid; False otherwise</returns>
-        public bool GetDownloadState(Dictionary<string, string> modelFiles, string modelBase, string modelName)
+        public bool GetDownloadState(Dictionary<string, string> modelFiles, string modelBasePath, string modelName)
         {
             bool isAllValid = true;
-            var modelFolder = Path.Combine(modelBase, modelName);
+            var downloadFolder = modelBasePath;
+            var modelFolder = Path.Combine(downloadFolder, modelName);
 
             // Create folders if they don't exist
-            Directory.CreateDirectory(modelBase);
+            Directory.CreateDirectory(downloadFolder);
             Directory.CreateDirectory(modelFolder);
 
             foreach (var modelFile in modelFiles)
@@ -318,25 +320,22 @@ namespace MauiApp1.Utils
                     // Check if file is empty
                     if (fileInfo.Length == 0)
                     {
-                        isAllValid = false && isAllValid;
+                        isAllValid = false;
                     }
                     else
                     {
-                        if (!string.IsNullOrEmpty(modelFile.Value))
+                        // Check if file MD5 matches expected value
+                        string actualMd5 = GetMD5Hash(fileFullname);
+                        if (!actualMd5.Equals(modelFile.Value, StringComparison.OrdinalIgnoreCase))
                         {
-                            // Check if file MD5 matches expected value
-                            string actualMd5 = GetMD5Hash(fileFullname);
-                            if (!actualMd5.Equals(modelFile.Value, StringComparison.OrdinalIgnoreCase))
-                            {
-                                isAllValid = false && isAllValid;
-                            }
+                            isAllValid = false;
                         }
                     }
                 }
                 else
                 {
                     // File does not exist
-                    isAllValid = false && isAllValid;
+                    isAllValid = false;
                 }
             }
             return isAllValid;
@@ -349,9 +348,9 @@ namespace MauiApp1.Utils
         /// <param name="rootFolderName">Root folder of the file</param>
         /// <param name="modelName">Model name (for folder path)</param>
         /// <param name="md5Str">Expected MD5 hash of the file</param>
-        public void DownloadCheck(string fileName, string modelBase, string modelName, string md5Str)
+        public void DownloadCheck(string fileName, string modelBasePath, string modelName, string md5Str)
         {
-            var downloadFolder = modelBase;
+            var downloadFolder = modelBasePath;
             var modelFolder = Path.Combine(downloadFolder, modelName);
 
             // Create folders if they don't exist
@@ -371,19 +370,12 @@ namespace MauiApp1.Utils
                 }
                 else
                 {
-                    if (!string.IsNullOrEmpty(md5Str))
+                    // Check MD5 hash; delete and trigger callback if mismatch
+                    string actualMd5 = GetMD5Hash(fileFullname);
+                    if (!actualMd5.Equals(md5Str, StringComparison.OrdinalIgnoreCase))
                     {
-                        // Check MD5 hash; delete and trigger callback if mismatch
-                        string actualMd5 = GetMD5Hash(fileFullname);
-                        if (!actualMd5.Equals(md5Str, StringComparison.OrdinalIgnoreCase))
-                        {
-                            File.Delete(fileFullname);
-                            _callback?.Invoke(0, DownloadState.noexisted, fileName);
-                        }
-                    }
-                    else
-                    {
-                        _callback?.Invoke(0, DownloadState.existed, fileName);
+                        File.Delete(fileFullname);
+                        _callback?.Invoke(0, DownloadState.noexisted, fileName);
                     }
                 }
             }

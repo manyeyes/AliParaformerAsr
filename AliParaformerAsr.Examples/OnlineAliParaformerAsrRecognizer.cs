@@ -2,7 +2,7 @@
 
 namespace AliParaformerAsr.Examples
 {
-    internal static partial class Program
+    internal partial class AliParaformerAsrRecognizer : BaseAsr
     {
         private static AliParaformerAsr.OnlineRecognizer? _onlineRecognizer;
         public static OnlineRecognizer? initOnlineRecognizer(string modelName, string modelBasePath, string modelAccuracy = "int8", int threadsNum = 2)
@@ -65,7 +65,7 @@ namespace AliParaformerAsr.Examples
 
                     // Process config paths (take the last one that matches the prefix)
                     configFilePath = fileInfos
-                        .LastOrDefault(f => f.FileName.StartsWith("asr") && (f.FileName.EndsWith(".json")))
+                        .LastOrDefault(f => f.FileName.StartsWith("asr") && (f.FileName.EndsWith(".yaml") || f.FileName.EndsWith(".json")))
                         ?.TargetPath ?? "";
 
                     // Process mvn paths (take the last one that matches the prefix)
@@ -128,7 +128,6 @@ namespace AliParaformerAsr.Examples
             List<float[]>? samples = new List<float[]>();
             if (mediaFilePaths == null || mediaFilePaths.Count() == 0)
             {
-                //mediaFilePaths = Directory.GetFiles(Path.Combine(modelBasePath, modelName, "test_wavs"));
                 string fullPath = Path.Combine(modelBasePath, modelName);
                 if (!Directory.Exists(fullPath))
                 {
@@ -178,7 +177,7 @@ namespace AliParaformerAsr.Examples
                 Console.WriteLine("No media file is read!");
                 return;
             }
-            streamDecodeMethod = string.IsNullOrEmpty(streamDecodeMethod) ? "multi" : streamDecodeMethod;//one ,multi
+            streamDecodeMethod = string.IsNullOrEmpty(streamDecodeMethod) ? "batch" : streamDecodeMethod;//one ,batch
             if (streamDecodeMethod == "one")
             {
                 //one stream decode
@@ -194,9 +193,9 @@ namespace AliParaformerAsr.Examples
                 }
                 // one stream decode
             }
-            //if (streamDecodeMethod == "multi")
+            //if (streamDecodeMethod == "batch")
             //{
-            //    //multi stream decode
+            //    //batch stream decode
             //    List<AliParaformerAsr.OnlineStream> onlineStreams = new List<AliParaformerAsr.OnlineStream>();
             //    List<bool> isEndpoints = new List<bool>();
             //    List<bool> isEnds = new List<bool>();

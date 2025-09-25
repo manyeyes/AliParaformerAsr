@@ -5,16 +5,19 @@ namespace MauiApp1;
 
 public partial class RecognitionForFiles : ContentPage
 {
-    private string _rootFolderName = "AllModels";
+    private string _modelBase = Path.Combine(SysConf.ApplicationBase, "AllModels");
     private string[] _downloadHostParams = new string[] { "https://www.modelscope.cn/models", "master" };
-    //private string _subFolderName = "speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx";
-    private string _subFolderName = "sensevoice-small-onnx";
+    // 如何使用其他模型
+    // 1.打开 https://modelscope.cn/profile/manyeyes?tab=model 页面
+    // 2.搜索 sensevoice, paraformer onnx 离线模型（非流式模型）
+    // 3.设置 _modelName 值，_modelName = [模型名称]
+    private string _modelName = "sensevoice-small-int8-onnx";
+    // 需要检查的文件 <文件名, hash>
     private Dictionary<string, string> _modelFiles = new Dictionary<string, string>() {
-        { "model.int8.onnx","d2164f971d7c936d2bf3cbe9d5f43d1e"},
-        {"am.mvn","dc1dbdeeb8961f012161cfce31eaacaf" },
-        {"asr.json","56ea6051f22a1b3f3e7506a963123a74" },
-        {"tokens.txt","56b7ae79411b22f167a1f185cae94aa7" },
-        {"0.wav","af1295e53df7298458f808bc0cd946e2" }
+        {"model.int8.onnx",""},
+        {"am.mvn","" },
+        {"asr.json","" },
+        {"tokens.txt","" }
     };
     private AliParaformerAsr.OfflineRecognizer _offlineRecognizer = null;
 
@@ -48,69 +51,33 @@ public partial class RecognitionForFiles : ContentPage
         BtnDownLoadModels.IsEnabled = true;
     }
 
-    async void DownloadModels()
+    private async void OnDeleteModelsClicked(object sender, EventArgs e)
     {
-        List<string> indexs = new List<string>();
-        DownloadHelper downloadHelper = new DownloadHelper(this.DownloadDisplay);
-        DownloadProgressLabel.Dispatcher.Dispatch(
-                         new Action(
-                             delegate
-                             {
-                                 DownloadProgressLabel.IsVisible = true;
-                                 DownloadProgressLabel.Text = "";
-                             }));
-
-        DownloadProgressBar.Dispatcher.Dispatch(
-                         new Action(
-                             delegate
-                             {
-                                 DownloadProgressBar.IsVisible = true;
-                                 DownloadProgressBar.Progress = 0 / 100.0;
-                             }));
-        while (indexs.Count < _modelFiles.Count)
+        BtnDeleteModels.IsEnabled = false;
+        TaskFactory taskFactory = new TaskFactory();
+        await taskFactory.StartNew(async () =>
         {
-            if (downloadHelper.IsDownloading)
-            {
-                continue;
-            }
-            foreach (var modelFile in _modelFiles)
-            {
-                var fileName = modelFile.Key;
-                if (indexs.Contains(fileName))
-                {
-                    continue;
-                }
-                if (downloadHelper.IsDownloading)
-                {
-                    break;
-                }
-                var downloadUrl = string.Format("{0}/manyeyes/{1}/resolve/{2}/{3}", _downloadHostParams[0], _subFolderName, _downloadHostParams[1], fileName);
-                downloadHelper.DownloadCreate(downloadUrl, fileName, _rootFolderName, _subFolderName);
-                downloadHelper.DownloadStart();
-                indexs.Add(fileName);
-            }
-        }
-        DownloadProgressLabel.Dispatcher.Dispatch(
-                         new Action(
-                             delegate
-                             {
-                                 DownloadProgressLabel.IsVisible = false;
-                                 DownloadProgressLabel.Text = "";
-                             }));
+            DeleteModels();
+        });
+        BtnDeleteModels.IsEnabled = true;
+    }
 
-        DownloadProgressBar.Dispatcher.Dispatch(
-                         new Action(
-                             delegate
-                             {
-                                 DownloadProgressBar.IsVisible = false;
-                                 DownloadProgressBar.Progress = 0 / 100.0;
-                             }));
+    private async void DownloadModels()
+    {
+        GitHelper gitHelper = new GitHelper(this.DownloadDisplay);
+        await Task.Run(() => gitHelper.ProcessCloneModel(_modelBase, _modelName));
+    }
+
+    private async void DeleteModels()
+    {
+        GitHelper gitHelper = new GitHelper(this.DownloadDisplay);
+        await Task.Run(() => gitHelper.DeleteModels(_modelBase, _modelName));
     }
 
     async void GetDownloadState()
     {
         DownloadHelper downloadHelper = new DownloadHelper();
-        bool state = downloadHelper.GetDownloadState(_modelFiles, _rootFolderName, _subFolderName);
+        bool state = downloadHelper.GetDownloadState(_modelFiles, _modelBase, _modelName);
         ModelStatusLabel.Dispatcher.Dispatch(
                          new Action(
                              delegate
@@ -129,13 +96,13 @@ public partial class RecognitionForFiles : ContentPage
 
     async void DownloadCheck()
     {
-
-        DownloadHelper downloadHelper = new DownloadHelper(this.DownloadDisplay);
-        bool state = downloadHelper.GetDownloadState(_modelFiles, _rootFolderName, _subFolderName);
+        DownloadHelper downloadHelper = new DownloadHelper(_modelBase, this.DownloadDisplay);
+        bool state = downloadHelper.GetDownloadState(_modelFiles, _modelBase, _modelName);
         ModelStatusLabel.Dispatcher.Dispatch(
                          new Action(
                              delegate
                              {
+                                 ModelStatusLabel.IsVisible = true;
                                  if (state)
                                  {
                                      ModelStatusLabel.Text = "model is ready";
@@ -157,7 +124,7 @@ public partial class RecognitionForFiles : ContentPage
                              }));
             foreach (var modelFile in _modelFiles)
             {
-                downloadHelper.DownloadCheck(modelFile.Key, _rootFolderName, _subFolderName, modelFile.Value);
+                downloadHelper.DownloadCheck(modelFile.Key, _modelBase, _modelName, modelFile.Value);
             }
         }
     }
@@ -165,100 +132,113 @@ public partial class RecognitionForFiles : ContentPage
 
     private void DownloadDisplay(int progress, DownloadState downloadState, string filename, string msg = "")
     {
-
-        switch (downloadState)
+        if (progress == 0 && downloadState == DownloadState.inprogres)
         {
-            case DownloadState.inprogres:
-                DownloadProgressBar.Dispatcher.Dispatch(
-                         new Action(
-                             delegate
-                             {
-                                 DownloadProgressBar.Progress = progress / 100.0;
-                             }));
-                DownloadProgressLabel.Dispatcher.Dispatch(
-                         new Action(
-                             delegate
-                             {
-                                 DownloadProgressLabel.Text = $"文件：{filename}，正在下载，进度：{progress}%\n";
-                             }));
+            DownloadProgressLabel.Dispatcher.Dispatch(
+                             new Action(
+                                 delegate
+                                 {
+                                     DownloadProgressLabel.IsVisible = true;
+                                     DownloadProgressLabel.Text = msg;
+                                 }));
+        }
+        else
+        {
+            switch (downloadState)
+            {
+                case DownloadState.inprogres:
+                    DownloadProgressBar.Dispatcher.Dispatch(
+                             new Action(
+                                 delegate
+                                 {
+                                     DownloadProgressBar.Progress = progress / 100.0;
+                                 }));
+                    DownloadProgressLabel.Dispatcher.Dispatch(
+                             new Action(
+                                 delegate
+                                 {
+                                     DownloadProgressLabel.Text = $"文件：{filename}，正在下载，进度：{progress}%\n";
+                                 }));
 
-                break;
-            case DownloadState.cancelled:
-                DownloadProgressBar.Dispatcher.Dispatch(
-                         new Action(
-                             delegate
-                             {
-                                 DownloadProgressBar.Progress = progress / 100.0;
-                             }));
-                DownloadProgressLabel.Dispatcher.Dispatch(
-                         new Action(
-                             delegate
-                             {
-                                 DownloadProgressLabel.Text = $"文件：{filename}，下载已取消\n";
-                             }));
-                break;
-            case DownloadState.error:
-                DownloadProgressBar.Dispatcher.Dispatch(
-                         new Action(
-                             delegate
-                             {
-                                 DownloadProgressBar.Progress = progress / 100.0;
-                             }));
-                DownloadProgressLabel.Dispatcher.Dispatch(
-                         new Action(
-                             delegate
-                             {
-                                 DownloadProgressLabel.Text = $"文件：{filename}，下载失败：{msg}\n";
-                             }));
-                DownloadResultsLabel.Dispatcher.Dispatch(
-                         new Action(
-                             delegate
-                             {
-                                 DownloadResultsLabel.Text += $"文件：{filename}，下载失败：{msg}\n";
-                             }));
-                break;
-            case DownloadState.completed:
-                DownloadProgressBar.Dispatcher.Dispatch(
-                         new Action(
-                             delegate
-                             {
-                                 DownloadProgressBar.Progress = progress / 100.0;
-                             }));
-                DownloadProgressLabel.Dispatcher.Dispatch(
-                         new Action(
-                             delegate
-                             {
-                                 DownloadProgressLabel.Text = $"文件：{filename}，下载完成\n";
-                             }));
-                DownloadResultsLabel.Dispatcher.Dispatch(
-                         new Action(
-                             delegate
-                             {
-                                 DownloadResultsLabel.Text += $"文件：{filename}，下载完成\n";
-                             }));
-                break;
-            case DownloadState.existed:
-                DownloadProgressBar.Dispatcher.Dispatch(
-                         new Action(
-                             delegate
-                             {
-                                 DownloadProgressBar.Progress = progress / 100.0;
-                             }));
-                DownloadResultsLabel.Dispatcher.Dispatch(
-                         new Action(
-                             delegate
-                             {
-                                 DownloadResultsLabel.Text += $"文件：{filename}，已存在\n";
-                             }));
-                break;
-            case DownloadState.noexisted:
-                DownloadResultsLabel.Dispatcher.Dispatch(
-                         new Action(
-                             delegate
-                             {
-                                 DownloadResultsLabel.Text += $"文件：{filename}，不存在\n";
-                             }));
-                break;
+                    break;
+                case DownloadState.cancelled:
+                    DownloadProgressBar.Dispatcher.Dispatch(
+                             new Action(
+                                 delegate
+                                 {
+                                     DownloadProgressBar.Progress = progress / 100.0;
+                                 }));
+                    DownloadProgressLabel.Dispatcher.Dispatch(
+                             new Action(
+                                 delegate
+                                 {
+                                     DownloadProgressLabel.Text = $"文件：{filename}，下载已取消\n";
+                                 }));
+                    break;
+                case DownloadState.error:
+                    DownloadProgressBar.Dispatcher.Dispatch(
+                             new Action(
+                                 delegate
+                                 {
+                                     DownloadProgressBar.Progress = progress / 100.0;
+                                 }));
+                    DownloadProgressLabel.Dispatcher.Dispatch(
+                             new Action(
+                                 delegate
+                                 {
+                                     DownloadProgressLabel.Text = $"文件：{filename}，下载失败：{msg}\n";
+                                 }));
+                    DownloadResultsLabel.Dispatcher.Dispatch(
+                             new Action(
+                                 delegate
+                                 {
+                                     DownloadResultsLabel.Text += $"文件：{filename}，下载失败：{msg}\n";
+                                 }));
+                    break;
+                case DownloadState.completed:
+                    DownloadProgressBar.Dispatcher.Dispatch(
+                             new Action(
+                                 delegate
+                                 {
+                                     DownloadProgressBar.Progress = progress / 100.0;
+                                 }));
+                    DownloadProgressLabel.Dispatcher.Dispatch(
+                             new Action(
+                                 delegate
+                                 {
+                                     DownloadProgressLabel.Text = $"文件：{filename}，下载完成\n";
+                                 }));
+                    DownloadResultsLabel.Dispatcher.Dispatch(
+                             new Action(
+                                 delegate
+                                 {
+                                     DownloadResultsLabel.Text += $"文件：{filename}，下载完成\n";
+                                 }));
+                    break;
+                case DownloadState.existed:
+                    DownloadProgressBar.Dispatcher.Dispatch(
+                             new Action(
+                                 delegate
+                                 {
+                                     DownloadProgressBar.Progress = progress / 100.0;
+                                 }));
+                    DownloadResultsLabel.Dispatcher.Dispatch(
+                             new Action(
+                                 delegate
+                                 {
+                                     DownloadResultsLabel.Text += $"文件：{filename}，已存在\n";
+                                 }));
+                    break;
+                case DownloadState.noexisted:
+                    DownloadResultsLabel.Dispatcher.Dispatch(
+                             new Action(
+                                 delegate
+                                 {
+                                     DownloadProgressLabel.IsVisible = false;
+                                     DownloadResultsLabel.Text += $"文件：{filename}，不存在\n";
+                                 }));
+                    break;
+            }
         }
     }
 
@@ -268,7 +248,7 @@ public partial class RecognitionForFiles : ContentPage
         TaskFactory taskFactory = new TaskFactory();
         await taskFactory.StartNew(async () =>
         {
-            TestAliParaformerAsrOfflineRecognizer();
+            RecognizerTestFilesByOffline();
         });
         BtnRecognitionExample.IsEnabled = true;
     }
@@ -301,7 +281,7 @@ public partial class RecognitionForFiles : ContentPage
                 string fullpath = fileResult.FullPath;
                 List<string> fullpaths = new List<string>();
                 fullpaths.Add(fullpath);
-                RecognizerFilesByAliParaformerAsrOffline(fullpaths);
+                RecognizerFilesByOffline(fullpaths);
             }
         });
     }
@@ -330,30 +310,114 @@ public partial class RecognitionForFiles : ContentPage
         File.Create(filePath);
     }
 
-    public AliParaformerAsr.OfflineRecognizer initAliParaformerAsrOfflineRecognizer(string modelName)
+    public AliParaformerAsr.OfflineRecognizer initAliParaformerAsrOfflineRecognizer(string modelName, string modelBasePath, string modelAccuracy = "int8", int threadsNum = 2)
     {
         if (_offlineRecognizer == null)
         {
+            if (string.IsNullOrEmpty(modelBasePath) || string.IsNullOrEmpty(modelName))
+            {
+                return null;
+            }
+            string modelFilePath = modelBasePath + "./" + modelName + "/model.int8.onnx";
+            string configFilePath = modelBasePath + "./" + modelName + "/asr.yaml";
+            string mvnFilePath = modelBasePath + "./" + modelName + "/am.mvn";
+            string tokensFilePath = modelBasePath + "./" + modelName + "/tokens.txt";
+            string modelebFilePath = modelBasePath + "./" + modelName + "/model_eb.int8.onnx";
+            string hotwordFilePath = modelBasePath + "./" + modelName + "/hotword.txt";
             try
             {
-                string allModels = "AllModels";
-                string modelFilePath = SysConf.ApplicationBase + "/" + allModels + "/" + modelName + "/model.int8.onnx";
-                string configFilePath = SysConf.ApplicationBase + "/" + allModels + "/" + modelName + "/asr.json";
-                string mvnFilePath = SysConf.ApplicationBase + "/" + allModels + "/" + modelName + "/am.mvn";
-                string tokensFilePath = SysConf.ApplicationBase + "/" + allModels + "/" + modelName + "/tokens.txt";
-                _offlineRecognizer = new AliParaformerAsr.OfflineRecognizer(modelFilePath, configFilePath, mvnFilePath, tokensFilePath, threadsNum: 5);
+                string folderPath = Path.Combine(modelBasePath, modelName);
+                // 1. Check if the folder exists
+                if (!Directory.Exists(folderPath))
+                {
+                    Console.WriteLine($"Error: folder does not exist - {folderPath}");
+                    return null;
+                }
+                // 2. Obtain the file names and destination paths of all files
+                // (calculate the paths in advance to avoid duplicate concatenation)
+                var fileInfos = Directory.GetFiles(folderPath)
+                    .Select(filePath => new
+                    {
+                        FileName = Path.GetFileName(filePath),
+                        // Recommend using Path. Combine to handle paths (automatically adapt system separators)
+                        TargetPath = Path.Combine(modelBasePath, modelName, Path.GetFileName(filePath))
+                        // If it is necessary to strictly maintain the original splicing method, it can be replaced with:
+                        // TargetPath = $"{modelBasePath}/./{modelName}/{Path.GetFileName(filePath)}"
+                    })
+                    .ToList();
+
+                // Process model path (priority: containing modelAccuracy>last one that matches prefix)
+                var modelCandidates = fileInfos
+                    .Where(f => f.FileName.StartsWith("model") && !f.FileName.Contains("_eb"))
+                    .ToList();
+                if (modelCandidates.Any())
+                {
+                    // Prioritize selecting files that contain the specified model accuracy
+                    var preferredModel = modelCandidates
+                        .LastOrDefault(f => f.FileName.Contains($".{modelAccuracy}."));
+                    modelFilePath = preferredModel?.TargetPath ?? modelCandidates.Last().TargetPath;
+                }
+
+                // Process modeleb path
+                var modelebCandidates = fileInfos
+                    .Where(f => f.FileName.StartsWith("model_eb"))
+                    .ToList();
+                if (modelebCandidates.Any())
+                {
+                    var preferredModeleb = modelebCandidates
+                        .LastOrDefault(f => f.FileName.Contains($".{modelAccuracy}."));
+                    modelebFilePath = preferredModeleb?.TargetPath ?? modelebCandidates.Last().TargetPath;
+                }
+
+                // Process config paths (take the last one that matches the prefix)
+                configFilePath = fileInfos
+                    .LastOrDefault(f => f.FileName.StartsWith("asr") && (f.FileName.EndsWith(".yaml") || f.FileName.EndsWith(".json")))
+                    ?.TargetPath ?? "";
+
+                // Process mvn paths (take the last one that matches the prefix)
+                mvnFilePath = fileInfos
+                    .LastOrDefault(f => f.FileName.StartsWith("am") && f.FileName.EndsWith(".mvn"))
+                    ?.TargetPath ?? "";
+
+                // Process token paths (take the last one that matches the prefix)
+                tokensFilePath = fileInfos
+                    .LastOrDefault(f => f.FileName.StartsWith("tokens") && f.FileName.EndsWith(".txt"))
+                    ?.TargetPath ?? "";
+
+                // Process hotword paths (take the last one that matches the prefix)
+                hotwordFilePath = fileInfos
+                    .LastOrDefault(f => f.FileName.StartsWith("hotword") && f.FileName.EndsWith(".txt"))
+                    ?.TargetPath ?? "";
+
+                if (string.IsNullOrEmpty(modelFilePath) || string.IsNullOrEmpty(tokensFilePath))
+                {
+                    return null;
+                }
+                TimeSpan start_time = new TimeSpan(DateTime.Now.Ticks);
+                _offlineRecognizer = new AliParaformerAsr.OfflineRecognizer(modelFilePath: modelFilePath, configFilePath: configFilePath, mvnFilePath: mvnFilePath, tokensFilePath: tokensFilePath, modelebFilePath: modelebFilePath, hotwordFilePath: hotwordFilePath, threadsNum: threadsNum);
+                TimeSpan end_time = new TimeSpan(DateTime.Now.Ticks);
+                double elapsed_milliseconds_init = end_time.TotalMilliseconds - start_time.TotalMilliseconds;
+                Console.WriteLine("init_models_elapsed_milliseconds:{0}", elapsed_milliseconds_init.ToString());
             }
-            catch
+            catch (UnauthorizedAccessException)
             {
-                DisplayAlert("Tips", "Please check if the model is correct", "close");
+                Console.WriteLine($"Error: No permission to access this folder");
+            }
+            catch (PathTooLongException)
+            {
+                Console.WriteLine($"Error: File path too long");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error occurred: {ex}");
             }
         }
         return _offlineRecognizer;
     }
 
-    public void RecognizerFilesByAliParaformerAsrOffline(List<string> fullpaths)
+    public void RecognizerFilesByOffline(List<string> fullpaths)
     {
-        AliParaformerAsr.OfflineRecognizer offlineRecognizer = initAliParaformerAsrOfflineRecognizer(_subFolderName);
+        AliParaformerAsr.OfflineRecognizer offlineRecognizer = initAliParaformerAsrOfflineRecognizer(_modelName, _modelBase);
         if (offlineRecognizer == null) { return; }
         AsrResults.Dispatcher.Dispatch(
                          new Action(
@@ -364,7 +428,7 @@ public partial class RecognitionForFiles : ContentPage
                              ));
         List<float[]>? samples = new List<float[]>();
         List<string> paths = new List<string>();
-        TimeSpan total_duration = new TimeSpan(0L);
+        TimeSpan totalDuration = new TimeSpan(0L);
         foreach (string fullpath in fullpaths)
         {
             string mediaFilePath = string.Format(fullpath);
@@ -380,7 +444,7 @@ public partial class RecognitionForFiles : ContentPage
                 {
                     paths.Add(mediaFilePath);
                     samples.Add(sample);
-                    total_duration += duration;
+                    totalDuration += duration;
                 }
             }
         }
@@ -411,30 +475,30 @@ public partial class RecognitionForFiles : ContentPage
                                  int n = 0;
                                  foreach (AliParaformerAsr.Model.OfflineRecognizerResultEntity result in results)
                                  {
+                                     string? text = AEDEmojiHelper.ReplaceTagsWithEmojis(result.Text.Replace("> ", ">"));
                                      StringBuilder r = new StringBuilder();
-                                     r.Append("{");
-                                     r.Append($"\"path\": \"{paths[n]}\",");
-                                     r.Append($"\"text\": \"{result?.Text}\",");
-                                     r.Append($"\"tokens\":[{string.Join(",", result?.Tokens.Select(x => $"\"{x}\"").ToArray())}],");
-                                     r.Append($"\"timestamps\":[{string.Join(",", result?.Timestamps.Select(x => $"[{x.First()},{x.Last()}]").ToArray())}]");
-                                     r.Append("}\n");
+                                     r.AppendLine("{");
+                                     //r.AppendLine($"\"path\": \"{paths[n]}\",");
+                                     r.AppendLine($"\"text\": \"{text}\",");
+                                     r.AppendLine($"\"tokens\":[{string.Join(",", result?.Tokens.Select(x => $"\"{x}\"").ToArray())}],");
+                                     r.AppendLine($"\"timestamps\":[{string.Join(",", result?.Timestamps.Select(x => $"[{x.First()},{x.Last()}]").ToArray())}]");
+                                     r.AppendLine("}\n");
                                      AsrResults.Text = r.ToString();
                                      n++;
                                  }
                                  TimeSpan end_time = new TimeSpan(DateTime.Now.Ticks);
-                                 double elapsed_milliseconds = end_time.TotalMilliseconds - start_time.TotalMilliseconds;
-                                 double rtf = elapsed_milliseconds / total_duration.TotalMilliseconds;
-                                 AsrResults.Text += string.Format("elapsed_milliseconds:{0}\n", elapsed_milliseconds.ToString());
-                                 AsrResults.Text += string.Format("total_duration:{0}\n", total_duration.TotalMilliseconds.ToString());
-                                 AsrResults.Text += string.Format("rtf:{1}\n", "0".ToString(), rtf.ToString());
-                                 AsrResults.Text += string.Format("End!");
+                                 double elapsedMilliseconds = end_time.TotalMilliseconds - start_time.TotalMilliseconds;
+                                 double rtf = elapsedMilliseconds / totalDuration.TotalMilliseconds;
+                                 AsrResults.Text += string.Format("Recognition elapsed milliseconds:{0}\n", elapsedMilliseconds.ToString());
+                                 AsrResults.Text += string.Format("Total duration milliseconds:{0}\n", totalDuration.TotalMilliseconds.ToString());
+                                 AsrResults.Text += string.Format("Rtf:{1}\n", "0".ToString(), rtf.ToString());
                              }));
 
     }
 
-    public void TestAliParaformerAsrOfflineRecognizer(List<float[]>? samples = null)
+    public void RecognizerTestFilesByOffline(List<float[]>? samples = null)
     {
-        AliParaformerAsr.OfflineRecognizer offlineRecognizer = initAliParaformerAsrOfflineRecognizer(_subFolderName);
+        AliParaformerAsr.OfflineRecognizer offlineRecognizer = initAliParaformerAsrOfflineRecognizer(_modelName, _modelBase);
         if (offlineRecognizer == null) { return; }
         AsrResults.Dispatcher.Dispatch(
                          new Action(
@@ -443,7 +507,7 @@ public partial class RecognitionForFiles : ContentPage
                                  AsrResults.Text = "Speech recognition in progress, please wait ...";
                              }
                              ));
-        TimeSpan total_duration = new TimeSpan(0L);
+        TimeSpan totalDuration = new TimeSpan(0L);
         List<string> paths = new List<string>();
         try
         {
@@ -453,14 +517,13 @@ public partial class RecognitionForFiles : ContentPage
                 string[]? mediaFilePaths = null;
                 if (mediaFilePaths == null || mediaFilePaths.Count() == 0)
                 {
-                    string fullPath = Path.Combine(SysConf.ApplicationBase + "/AllModels/", _subFolderName);
+                    string fullPath = Path.Combine(_modelBase, _modelName);
                     if (!Directory.Exists(fullPath))
                     {
                         mediaFilePaths = Array.Empty<string>(); // 路径不正确时返回空数组
                     }
                     else
                     {
-                        //mediaFilePaths = Directory.GetFiles(fullPath);
                         mediaFilePaths = Directory.GetFiles(
                             path: fullPath,
                             searchPattern: "*.wav",
@@ -482,13 +545,13 @@ public partial class RecognitionForFiles : ContentPage
                         {
                             paths.Add(mediaFilePath);
                             samples.Add(sample);
-                            total_duration += duration;
+                            totalDuration += duration;
                         }
                     }
                 }
             }
             if (samples.Count == 0)
-            {                
+            {
                 AsrResults.Dispatcher.Dispatch(
                          new Action(
                              delegate
@@ -512,33 +575,31 @@ public partial class RecognitionForFiles : ContentPage
                                      }
                                      List<AliParaformerAsr.Model.OfflineRecognizerResultEntity> results = offlineRecognizer.GetResults(streams);
                                      int n = 0;
+                                     AsrResults.Text = "";
                                      foreach (AliParaformerAsr.Model.OfflineRecognizerResultEntity result in results)
                                      {
+                                         AsrResults.Text += n + "." + Path.GetFileName(paths[n]) + "\n";
                                          StringBuilder r = new StringBuilder();
-                                         r.Append("{");
-                                         r.Append($"\"path\": \"{paths[n]}\",");
-                                         r.Append($"\"text\": \"{result?.Text}\",");
-                                         r.Append($"\"tokens\":[{string.Join(",", result?.Tokens.Select(x => $"\"{x}\"").ToArray())}],");
-                                         r.Append($"\"timestamps\":[{string.Join(",", result?.Timestamps.Select(x => $"[{x.First()},{x.Last()}]").ToArray())}]");
-                                         r.Append("}\n");
-                                         AsrResults.Text = r.ToString();
+                                         string? text = AEDEmojiHelper.ReplaceTagsWithEmojis(result.Text.Replace("> ", ">"));
+                                         r.AppendLine("{");
+                                         //r.AppendLine($"\"path\": \"{paths[n]}\",");
+                                         r.AppendLine($"\"text\": \"{text}\",");
+                                         r.AppendLine($"\"tokens\":[{string.Join(",", result?.Tokens.Select(x => $"\"{x}\"").ToArray())}],");
+                                         r.AppendLine($"\"timestamps\":[{string.Join(",", result?.Timestamps.Select(x => $"[{x.First()},{x.Last()}]").ToArray())}]");
+                                         r.AppendLine("}\n");
+                                         AsrResults.Text += r.ToString();
                                          n++;
                                      }
                                      TimeSpan end_time = new TimeSpan(DateTime.Now.Ticks);
-                                     double elapsed_milliseconds = end_time.TotalMilliseconds - start_time.TotalMilliseconds;
-                                     double rtf = elapsed_milliseconds / total_duration.TotalMilliseconds;
-                                     Console.WriteLine("elapsed_milliseconds:{0}", elapsed_milliseconds.ToString());
-                                     Console.WriteLine("total_duration:{0}", total_duration.TotalMilliseconds.ToString());
-                                     Console.WriteLine("rtf:{1}", "0".ToString(), rtf.ToString());
-                                     Console.WriteLine("Hello, World!");
-                                     AsrResults.Text += string.Format("elapsed_milliseconds:{0}\n", elapsed_milliseconds.ToString());
-                                     AsrResults.Text += string.Format("total_duration:{0}\n", total_duration.TotalMilliseconds.ToString());
-                                     AsrResults.Text += string.Format("rtf:{1}\n", "0".ToString(), rtf.ToString());
-                                     AsrResults.Text += string.Format("End!");
+                                     double elapsedMilliseconds = end_time.TotalMilliseconds - start_time.TotalMilliseconds;
+                                     double rtf = elapsedMilliseconds / totalDuration.TotalMilliseconds;
+                                     AsrResults.Text += string.Format("Recognition elapsed milliseconds:{0}\n", elapsedMilliseconds.ToString());
+                                     AsrResults.Text += string.Format("Total duration milliseconds:{0}\n", totalDuration.TotalMilliseconds.ToString());
+                                     AsrResults.Text += string.Format("Rtf:{1}\n", "0".ToString(), rtf.ToString());
                                  }
                                  ));
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             AsrResults.Dispatcher.Dispatch(
                              new Action(

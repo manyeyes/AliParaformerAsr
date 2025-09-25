@@ -1,78 +1,116 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">		
+		<PropertyGroup>
+				<TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-maccatalyst</TargetFrameworks>
+				<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-windows10.0.19041.0</TargetFrameworks>
+				<!--Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET-->
+				<!--<TargetFrameworks>$(TargetFrameworks);net9.0-tizen</TargetFrameworks>-->
+				<OutputType>Exe</OutputType>
+				<AssemblyName>MauiApp1</AssemblyName>
+				<RootNamespace>MauiApp1</RootNamespace>
+				<UseMaui>true</UseMaui>
+				<SingleProject>true</SingleProject>
+				<ImplicitUsings>enable</ImplicitUsings>
 
-	<PropertyGroup>
-		<TargetFrameworks>net8.0-android;net8.0-ios;net8.0-maccatalyst</TargetFrameworks>
-		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net8.0-windows10.0.19041.0</TargetFrameworks>
-		<!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
-		<!-- <TargetFrameworks>$(TargetFrameworks);net6.0-tizen</TargetFrameworks> -->
-		<OutputType>Exe</OutputType>
-		<RootNamespace>MauiApp1</RootNamespace>
-		<UseMaui>true</UseMaui>
-		<SingleProject>true</SingleProject>
-		<ImplicitUsings>enable</ImplicitUsings>
+				<!--确保与清单中的名称一致-->
+				<!--通用配置：启用发布时优化（包含 AOT 相关优化）-->
+				<PublishTrimmed>false</PublishTrimmed>
+				<!--裁剪未使用代码，通常与 AOT 配合使用-->
+				<TrimMode>link</TrimMode>
+				<!--链接模式裁剪，更彻底-->
+				
+				<!--Android 平台 AOT 配置-->
+				<AndroidEnableProguard>true</AndroidEnableProguard>
 
-		<!-- Display name -->
-		<ApplicationTitle>ASR demo</ApplicationTitle>
+				<!--启用 ProGuard 混淆（可选，减少体积）-->
+				<AndroidEnableAot>true</AndroidEnableAot>
 
-		<!-- App Identifier -->
-		<ApplicationId>com.manyeyes.MauiApp1</ApplicationId>
-		<ApplicationIdGuid>be632abf-f31d-4458-8964-b4e8787dee11</ApplicationIdGuid>
+				<!--启用 Android AOT-->
+				<AndroidAotAdditionalArguments>--aot=full</AndroidAotAdditionalArguments>
 
-		<!-- Versions -->
-		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-		<ApplicationVersion>1</ApplicationVersion>
+				<!--全量 AOT 编译-->
+				<!--iOS 平台 AOT 配置（iOS 默认使用 AOT，以下为增强配置）-->
+				<MtouchAOTOptions>llvm</MtouchAOTOptions>
+				<!--使用 LLVM 优化 AOT 编译（推荐）-->
+				<MtouchEnableBitcode>false</MtouchEnableBitcode>
 
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">14.2</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">14.0</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
-		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
-	</PropertyGroup>
+				<!--关闭 Bitcode（与 AOT 兼容性更好）-->
+				<!--Windows 平台 AOT 配置-->
+				<PublishAot>false</PublishAot>
+				<!--启用 Windows AOT-->
+				<WindowsPackageType>MSIX</WindowsPackageType>
+				<!--Windows 发布格式（AOT 通常配合 MSIX）-->
+				
+				<!--Display name-->
+				<ApplicationTitle>ASR demo</ApplicationTitle>
+				<!--App Identifier-->
+				<ApplicationId>com.manyeyes.MauiApp1</ApplicationId>
+				<ApplicationIdGuid>be632abf-f31d-4458-8964-b4e8787dee11</ApplicationIdGuid>
+				<!--Versions-->
+				<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+				<ApplicationVersion>1</ApplicationVersion>
+				
+				<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">14.2</SupportedOSPlatformVersion>
+				<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">14.0</SupportedOSPlatformVersion>
+				<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
+				<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
+				<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
+				<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
+				<GenerateAppInstallerFile>False</GenerateAppInstallerFile>
+				<AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
+				<AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
+				<AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
+				<AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
+				<GenerateTestArtifacts>True</GenerateTestArtifacts>
+				<AppInstallerUri>c:/user/aliparaformerasr-mauiapp1</AppInstallerUri>
+				<HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
+				<PackageCertificateThumbprint>082E6518132EFF224F9B4AE94EAA5A68FFC93789</PackageCertificateThumbprint>
+		</PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net6.0-android|AnyCPU'">
-	  <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
-	</PropertyGroup>
+		<ItemGroup>
+				<!-- App Icon -->
+				<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#F6F8F6" />
 
-	<ItemGroup>
-		<!-- App Icon -->
-		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#F6F8F6" />
+				<!-- Splash Screen -->
+				<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#F6F8F6" BaseSize="128,128" />
 
-		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#F6F8F6" BaseSize="128,128" />
+				<!-- Images -->
+				<MauiImage Include="Resources\Images\*" />
+				<MauiImage Update="Resources\Images\dotnet_bot.svg" BaseSize="168,208" />
 
-		<!-- Images -->
-		<MauiImage Include="Resources\Images\*" />
-		<MauiImage Update="Resources\Images\dotnet_bot.svg" BaseSize="168,208" />
+				<!-- Custom Fonts -->
+				<MauiFont Include="Resources\Fonts\*" />
 
-		<!-- Custom Fonts -->
-		<MauiFont Include="Resources\Fonts\*" />
+				<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
+				<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+		</ItemGroup>
 
-		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
-		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
-	</ItemGroup>
+		<ItemGroup>
+				<PackageReference Include="LibGit2Sharp" Version="0.31.0" />
+				<PackageReference Include="ManySpeech.AliFsmnVad" Version="1.1.3" />
+				<PackageReference Include="ManySpeech.AliParaformerAsr" Version="1.1.8" />
+				<PackageReference Include="NAudio" Version="2.2.1" />
+		</ItemGroup>
 
-	<ItemGroup>
-	  <PackageReference Include="ManySpeech.AliParaformerAsr" Version="1.1.2" />
-	  <PackageReference Include="NAudio" Version="2.2.1" />
-	</ItemGroup>
+		<ItemGroup>
+				<Compile Update="RecognitionForFiles.xaml.cs">
+						<DependentUpon>RecognitionForFiles.xaml</DependentUpon>
+				</Compile>
+				<Compile Update="MainPage.xaml.cs">
+						<DependentUpon>MainPage.xaml</DependentUpon>
+				</Compile>
+		</ItemGroup>
 
-	<ItemGroup>
-	  <Compile Update="RecognitionForFiles.xaml.cs">
-	    <DependentUpon>RecognitionForFiles.xaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="MainPage.xaml.cs">
-	    <DependentUpon>MainPage.xaml</DependentUpon>
-	  </Compile>
-	</ItemGroup>
+		<ItemGroup>
+				<MauiXaml Update="MainPage.xaml">
+						<Generator>MSBuild:Compile</Generator>
+				</MauiXaml>
+				<MauiXaml Update="MySplashPage.xaml">
+						<Generator>MSBuild:Compile</Generator>
+				</MauiXaml>
+		</ItemGroup>
 
-	<ItemGroup>
-	  <MauiXaml Update="MainPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="MySplashPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	</ItemGroup>
+		<ItemGroup>
+		  <PackageReference Update="Microsoft.Maui.Controls" Version="10.0.0-rc.1.25452.6" />
+		</ItemGroup>
 
 </Project>

@@ -17,31 +17,36 @@ AliParaformerAsr是一个使用C#编写的“语音识别”库，底层调用Mi
 |  paraformer-large-zh-yue-en-onnx-online-dengcunqin-20240208 |  流式 | 中文、粤语、英文 | 否  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/paraformer-large-zh-yue-en-onnx-online-dengcunqin-20240208 "modelscope") |
 |  paraformer-seaco-large-zh-timestamp-onnx-offline |  非流式 | 中文、热词 | 否  | 是  | [modelscope](https://www.modelscope.cn/models/manyeyes/paraformer-seaco-large-zh-timestamp-onnx-offline "modelscope") |
 |  SenseVoiceSmall |  非流式 | 中文、粤语、英文、日语、韩语 | 是  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/sensevoice-small-onnx "modelscope"), [modelscope-split-embed](https://www.modelscope.cn/models/manyeyes/sensevoice-small-split-embed-onnx "modelscope-split-embed") |
+|  sensevoice-small-wenetspeech-yue-int8-onnx |  非流式 | 粤语、中文、英文、日语、韩语 | 是  | 否  | [modelscope](https://www.modelscope.cn/models/manyeyes/sensevoice-small-wenetspeech-yue-int8-onnx "modelscope") |
 
 
-##### 如何使用
-###### 1.克隆项目源码
+
+
+## 如何运行示例项目
+
+###### 1.克隆项目到本地
 ```bash
 cd /path/to
 git clone https://github.com/manyeyes/AliParaformerAsr.git
-```
-###### 2.下载上述列表中的模型到目录：/path/to/AliParaformerAsr/AliParaformerAsr.Examples
+``` 
+###### 2.下载上述列表中的模型到本地目录备用（运行示例将自动下载模型，此步骤可跳过）
 ```bash
 cd /path/to/AliParaformerAsr/AliParaformerAsr.Examples
 git clone https://www.modelscope.cn/manyeyes/[模型名称].git
 ```
 ###### 3.使用vs2022(或其他IDE)加载工程，
-###### 4.将模型目录中的文件设置为：复制到输出目录->如果较新则复制
-###### 5.修改示例中代码：string modelName =[模型目录名]
-非流式示例：OfflineRecognizer.cs
-流式示例：OnlineRecognizer.cs
+###### 4.运行 AliParaformerAsr.Examples 项目
+AliParaformerAsr.Examples 是控制台 / 桌面端示例项目，用于演示语音识别的基础功能（如离线转写、实时识别）。
+###### 5.运行 MauiApp1 项目
+MauiApp1 是基于 .NET MAUI 开发的跨平台项目，支持在 Android、iOS、Windows 等设备上运行语音识别功能。
 ###### 6.配置说明（参考：asr.yaml文件）：
 用于解码的asr.yaml配置参数，大部分不需要修改。
 可修改的参数：
 use_itn: true（在sensevoicesmall的配置中开启之后，可实现逆文本正则化。）
-###### 7.运行项目
 
-## 离线（非流式）模型调用方法：
+## 如何在代码中调用
+
+### 离线（非流式）模型调用方法：
 
 ###### 1.添加项目引用
 using AliParaformerAsr;
@@ -90,61 +95,14 @@ List<AliParaformerAsr.Model.OfflineRecognizerResultEntity> results = offlineReco
 ```
 欢迎大家来体验达摩院推出的语音识别模型
 
-正是因为存在绝对正义所以我们接受现实的相对正义但是不要因为现实的相对正义我们就认为这个世界没有正义因为如果当你认为这个世界没有正义
-
 非常的方便但是现在不同啊英国脱欧欧盟内部完善的产业链的红利人
 
 he must be home now for the light is on他一定在家因为灯亮着就是有一种推理或者解释的那种感觉
-
-after early nightfall the yellow lamps would light up here in there the squalid quarter of the broffles
 
 elapsed_milliseconds:1502.8828125
 total_duration:40525.6875
 rtf:0.037084696280599808
 end!
-```
-
-###### 5.输出时间戳
-如需输出字级（中文）或单词级（英文）时间戳，使用带时间戳的onnx模型即可，其他调用方式与上述一致。
-时间戳单位：ms
-```
-he must be home now for the light is on他一定在家因为灯亮着就是有一种推理或者解释的那种感觉
-he:[49,229]
-must:[229,630]
-be:[630,989]
-home:[989,1350]
-now:[1350,1589]
-for:[1589,1829]
-the:[1829,1949]
-light:[1949,2270]
-is:[2270,2490]
-on:[2490,2770]
-他:[2770,2970]
-一:[2970,3129]
-定:[3129,3310]
-在:[3310,3490]
-家:[3490,3689]
-因:[3689,3790]
-为:[3790,3990]
-灯:[3990,4150]
-亮:[4150,4430]
-着:[4430,4830]
-就:[4830,4970]
-是:[4970,5089]
-有:[5089,5230]
-一:[5230,5350]
-种:[5350,5950]
-推:[5950,6230]
-理:[6230,6430]
-或:[6430,6569]
-者:[6569,6770]
-解:[6770,6990]
-释:[6990,7170]
-的:[7170,7529]
-那:[7529,7710]
-种:[7710,7870]
-感:[7870,8010]
-觉:[8010,8785]
 ```
 
 ## 实时（流式）模型调用方法：
@@ -184,65 +142,6 @@ AliParaformerAsr.OnlineRecognizerResultEntity result = onlineRecognizer.GetResul
 
 ###### 4.输出结果
 ```
-正是
-
-正是因为存
-
-正是因为存在绝对正
-
-正是因为存在绝对正义所以我
-
-正是因为存在绝对正义所以我我接
-
-正是因为存在绝对正义所以我我接受现实
-
-正是因为存在绝对正义所以我我接受现实式相对生
-
-正是因为存在绝对正义所以我我接受现实式相对生
-
-正是因为存在绝对正义所以我我接受现实式相对生但是
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这这个界界
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这这个界界
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这这个界界
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这这个界界
-
-正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这这个界界
 
 正是因为存在绝对正义所以我我接受现实式相对生但是不要因因现实的相对对正义们就就认为这个世界有有证因为如果当你认为这这个界界
 
