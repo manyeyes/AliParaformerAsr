@@ -1,3 +1,24 @@
+# 📢 Important Project Migration Notice
+
+For easier unified management and maintenance, the **AliParaformerAsr project has been completely migrated to a new repository**:
+
+🔗 **New Repository Address**  
+[ManySpeech](https://github.com/manyeyes/ManySpeech "ManySpeech Main Repository")  
+
+From now on, all code updates, issue feedback, and feature maintenance will be conducted uniformly in the ManySpeech repository. Users and developers are kindly requested to visit the new repository for the latest resources.
+
+
+### ⚠️ Key Changes After Migration
+- **Namespace Adjustment**  
+  Changed from the original `AliParaformerAsr` to `ManySpeech.AliParaformerAsr`. Please update your references during integration.
+
+- **Resource Enhancement**  
+  The new repository provides more comprehensive usage examples, more detailed API documentation, and continuous feature iterations.
+
+Thank you for your understanding and support!
+
+----------------------------------------------------------------
+
 # AliParaformerAsr
 
 ##### Introduction:
