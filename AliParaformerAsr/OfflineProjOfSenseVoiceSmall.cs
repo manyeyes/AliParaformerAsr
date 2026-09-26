@@ -70,7 +70,7 @@ namespace AliParaformerAsr
             if (_textnormDict.ContainsKey(textnormValue))
             {
                 //textnormId = _textnormDict.GetValueOrDefault(textnormValue);
-                _textnormDict.TryGetValue(textnormValue, out languageId);
+                _textnormDict.TryGetValue(textnormValue, out textnormId);
             }
             var inputMeta = _modelSession.InputMetadata;
             if (!inputMeta.ContainsKey("language") && !inputMeta.ContainsKey("textnorm"))
